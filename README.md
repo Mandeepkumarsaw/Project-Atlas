@@ -74,8 +74,8 @@ flowchart TD
     Calc --> Critic
     SQL_Tool --> Critic
 
-    Critic -->|Confidence >= 0.70| Writer
-    Critic -->|Confidence < 0.70 / Conflict| Escalate
+    Critic -->|High Confidence| Writer
+    Critic -->|Low Confidence or Conflict| Escalate
 
     Escalate -->|Create Ticket| MySQL
     Escalate --> Writer

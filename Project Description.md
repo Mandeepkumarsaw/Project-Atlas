@@ -61,10 +61,10 @@ flowchart TD
     Calc --> Critic
     SQLTool --> Critic
     
-    Critic -->|Confidence >= 0.70 & No Conflict| Writer["Grounded Response Writer"]
-    Critic -->|Confidence < 0.70 / Forecast > 2030| Escalation["Analyst Escalation Node"]
+    Critic -->|High Confidence and Valid Scope| Writer["Grounded Response Writer"]
+    Critic -->|Low Confidence or Forecast Beyond 2030| Escalation["Analyst Escalation Node"]
     
-    Escalation -->|Create Ticket (ESC-XXXX)| MySQL
+    Escalation -->|Create Ticket ESC-XXXX| MySQL
     Escalation --> Writer
     Writer --> API
     Refusal --> API
