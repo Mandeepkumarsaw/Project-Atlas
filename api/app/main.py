@@ -42,7 +42,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from app.routes.ui import router as ui_router
+
 # Register routes
+app.include_router(ui_router)
 app.include_router(health_router)
 app.include_router(ingest_router)
 app.include_router(chat_router)
