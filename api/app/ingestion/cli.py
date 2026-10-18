@@ -9,6 +9,13 @@ from app.services.db import init_database_tables
 
 def get_project_root() -> str:
     """Return absolute path to Project Atlas root directory."""
+    if os.path.exists("/app/reports"):
+        return "/app"
+    curr = os.path.abspath(os.path.dirname(__file__))
+    while curr and curr != os.path.dirname(curr):
+        if os.path.exists(os.path.join(curr, "reports")):
+            return curr
+        curr = os.path.dirname(curr)
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 
 
