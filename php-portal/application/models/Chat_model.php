@@ -67,7 +67,13 @@ class Chat_model extends CI_Model {
         ])->row();
 
         if (!$msg) {
-            return false;
+            $this->db->order_by('id', 'DESC');
+            $latest = $this->db->get_where('chat_messages', ['client_id' => $client_id], 1)->row();
+            if ($latest) {
+                $message_id = $latest->id;
+            } else {
+                return false;
+            }
         }
 
         $data = [

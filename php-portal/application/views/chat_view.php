@@ -208,14 +208,15 @@
                                 <?php endif; ?>
 
                                 <!-- Thumbs Up / Down Feedback -->
-                                <?php if ($msg['role'] === 'assistant' && !empty($msg['id'])): ?>
-                                    <div class="feedback-actions mt-2 pt-2 border-top d-flex align-items-center gap-2" id="feedback-block-<?php echo (int)$msg['id']; ?>">
-                                        <span class="small text-muted me-1">Was this helpful?</span>
-                                        <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" onclick="submitFeedback(<?php echo (int)$msg['id']; ?>, 1)">
-                                            <i class="bi bi-hand-thumbs-up"></i> Helpful
+                                <?php if ($msg['role'] === 'assistant'): ?>
+                                    <?php $f_id = !empty($msg['id']) ? (int)$msg['id'] : 1; ?>
+                                    <div class="feedback-actions mt-3 pt-2 border-top d-flex align-items-center gap-2" id="feedback-block-<?php echo $f_id; ?>">
+                                        <span class="small text-muted fw-semibold me-1"><i class="bi bi-chat-heart text-primary"></i> Feedback:</span>
+                                        <button type="button" class="btn btn-sm btn-outline-success px-3 py-1 fw-medium" onclick="submitFeedback(<?php echo $f_id; ?>, 1)">
+                                            👍 Thumbs Up
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="submitFeedback(<?php echo (int)$msg['id']; ?>, -1)">
-                                            <i class="bi bi-hand-thumbs-down"></i> Not Helpful
+                                        <button type="button" class="btn btn-sm btn-outline-danger px-3 py-1 fw-medium" onclick="submitFeedback(<?php echo $f_id; ?>, -1)">
+                                            👎 Thumbs Down
                                         </button>
                                     </div>
                                 <?php endif; ?>

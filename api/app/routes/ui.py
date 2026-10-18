@@ -387,20 +387,18 @@ HTML_CONTENT = """<!DOCTYPE html>
                 `;
             }
 
-            let feedbackHtml = "";
-            if (data.message_id) {
-                feedbackHtml = `
-                    <div class="feedback-actions mt-2 pt-2 border-top d-flex align-items-center gap-2" id="ui-feedback-${data.message_id}">
-                        <span class="small text-muted me-1">Was this helpful?</span>
-                        <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" title="Thumbs Up" onclick="submitUiFeedback(${data.message_id}, 1)">
-                            <i class="bi bi-hand-thumbs-up"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="Thumbs Down" onclick="submitUiFeedback(${data.message_id}, -1)">
-                            <i class="bi bi-hand-thumbs-down"></i>
-                        </button>
-                    </div>
-                `;
-            }
+            const msgId = data.message_id || ("msg-" + Date.now());
+            const feedbackHtml = `
+                <div class="feedback-actions mt-3 pt-2 border-top d-flex align-items-center gap-2" id="ui-feedback-${msgId}">
+                    <span class="small text-muted fw-semibold me-1"><i class="bi bi-chat-heart text-primary"></i> Feedback:</span>
+                    <button type="button" class="btn btn-sm btn-outline-success px-3 py-1 fw-medium" title="Thumbs Up" onclick="submitUiFeedback('${msgId}', 1)">
+                        👍 Thumbs Up
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger px-3 py-1 fw-medium" title="Thumbs Down" onclick="submitUiFeedback('${msgId}', -1)">
+                        👎 Thumbs Down
+                    </button>
+                </div>
+            `;
 
             box.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-1">
@@ -500,6 +498,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 </html>
 """
 
+from typing import Any
 from pydantic import BaseModel
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -511,7 +510,7 @@ from app.services.db import get_db, Escalation, Conversation, ChatMessage, Feedb
 
 
 class FeedbackPayload(BaseModel):
-    message_id: int
+    message_id: Any
     conversation_id: str
     client_id: str
     rating: int
@@ -578,8 +577,34 @@ def ui_chat(req: ChatRequest, db: Session = Depends(get_db)):
 def ui_feedback(payload: FeedbackPayload, db: Session = Depends(get_db)):
     """Record user thumbs up (+1) / thumbs down (-1) feedback into MySQL."""
     validate_client_context(payload.client_id)
+    target_id = None
+    try:
+        target_id = int(payload.message_id)
+    except (ValueError, TypeError):
+        pass
+
+    msg = None
+    if target_id is not None:
+        msg = db.query(ChatMessage).filter(ChatMessage.id == target_id).first()
+
+    if not msg:
+        # Fallback to the latest assistant message for this client
+        latest = db.query(ChatMessage).filter(ChatMessage.client_id == payload.client_id).order_by(ChatMessage.id.desc()).first()
+        if latest:
+            target_id = latest.id
+        else:
+            fallback_msg = ChatMessage(
+                conversation_id=payload.conversation_id,
+                client_id=payload.client_id,
+                role="assistant",
+                content="Response feedback"
+            )
+            db.add(fallback_msg)
+            db.flush()
+            target_id = fallback_msg.id
+
     fb = Feedback(
-        message_id=payload.message_id,
+        message_id=target_id,
         conversation_id=payload.conversation_id,
         client_id=payload.client_id,
         rating=1 if payload.rating > 0 else -1
