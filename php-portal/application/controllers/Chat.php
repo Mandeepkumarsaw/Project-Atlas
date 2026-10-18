@@ -33,6 +33,29 @@ class Chat extends CI_Controller {
         }
 
         $messages = $this->session->userdata('chat_history') ?: [];
+        if (empty($messages)) {
+            $db_messages = $this->chat_model->get_conversation_messages($conversation_id, $client_id);
+            if (!empty($db_messages)) {
+                $messages = [];
+                foreach ($db_messages as $row) {
+                    $citations = !empty($row['citations_json']) ? json_decode($row['citations_json'], true) : [];
+                    $conflicts = !empty($row['conflicts_json']) ? json_decode($row['conflicts_json'], true) : [];
+                    $derived = !empty($row['derived_values_json']) ? json_decode($row['derived_values_json'], true) : [];
+                    $messages[] = [
+                        'id' => $row['id'],
+                        'role' => $row['role'],
+                        'content' => $row['content'],
+                        'citations' => is_array($citations) ? $citations : [],
+                        'confidence' => ($row['confidence'] !== null) ? (float)$row['confidence'] : 0.0,
+                        'conflicts' => is_array($conflicts) ? $conflicts : [],
+                        'derived_values' => is_array($derived) ? $derived : [],
+                        'escalated' => ($row['status'] === 'escalated'),
+                        'time' => date('H:i', strtotime($row['created_at']))
+                    ];
+                }
+                $this->session->set_userdata('chat_history', $messages);
+            }
+        }
         $escalations = $this->api_client->get_escalations($client_id);
 
         $data = [

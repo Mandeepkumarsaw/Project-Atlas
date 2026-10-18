@@ -1061,7 +1061,69 @@
         function setQuestion(text) {
             const input = document.getElementById('questionInput');
             input.value = text;
-            input.focus();
+            const form = document.getElementById('chatForm');
+            if (form) {
+                if (typeof form.requestSubmit === 'function') {
+                    form.requestSubmit();
+                } else {
+                    form.submit();
+                }
+            } else {
+                input.focus();
+            }
+        }
+
+        // Live submit state with thinking indicator
+        const chatForm = document.getElementById('chatForm');
+        if (chatForm) {
+            chatForm.addEventListener('submit', function(e) {
+                const input = document.getElementById('questionInput');
+                if (!input || !input.value.trim()) {
+                    e.preventDefault();
+                    return;
+                }
+                const btn = this.querySelector('.composer-send-btn');
+                if (btn) {
+                    btn.disabled = true;
+                    btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="width: 0.9rem; height: 0.9rem;"></span>';
+                }
+                const stream = document.getElementById('chatStream');
+                if (stream) {
+                    const welcomeHero = stream.querySelector('.welcome-hero');
+                    if (welcomeHero) {
+                        welcomeHero.style.display = 'none';
+                    }
+                    const userText = input.value.trim();
+                    const now = new Date();
+                    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'message-row message-row-user';
+                    userDiv.innerHTML = `
+                        <div class="bubble-user">
+                            <div class="bubble-meta" style="color: #60A5FA;">
+                                <span class="fw-semibold"><i class="bi bi-person-fill"></i> You</span>
+                                <span>${timeStr}</span>
+                            </div>
+                            <div>${userText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                        </div>
+                    `;
+                    stream.appendChild(userDiv);
+
+                    const thinkingDiv = document.createElement('div');
+                    thinkingDiv.className = 'message-row message-row-assistant';
+                    thinkingDiv.id = 'thinkingIndicator';
+                    thinkingDiv.innerHTML = `
+                        <div class="bubble-assistant" style="background: rgba(255,255,255,0.85); border: 1px dashed #CBD5E1;">
+                            <div class="d-flex align-items-center gap-2 text-secondary py-1" style="font-size: 0.82rem;">
+                                <span class="spinner-grow spinner-grow-sm text-primary" role="status" style="width: 0.85rem; height: 0.85rem;"></span>
+                                <span class="fw-medium text-dark">Atlas Copilot is retrieving verified reports and synthesizing intelligence...</span>
+                            </div>
+                        </div>
+                    `;
+                    stream.appendChild(thinkingDiv);
+                    stream.scrollTop = stream.scrollHeight;
+                }
+            });
         }
 
         // Auto scroll chat to bottom
