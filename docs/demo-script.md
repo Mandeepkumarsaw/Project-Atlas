@@ -7,8 +7,15 @@
 ---
 
 ## Preparation & Prerequisites
+ 
+Reviewers can choose between running against the live hosted cloud deployment (instant) or starting services locally:
 
-1. Ensure the services are running either via Docker Compose:
+### Option 1: Live Hosted Cloud Deployment (No Setup)
+- Open your web browser to: **[https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat](https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat)**
+- Pre-loaded with full report corpus (`R-101` through `R-107`), client context switching (`C-01`, `C-02`, `C-03`), and live MySQL feedback.
+
+### Option 2: Local Docker Compose Execution
+1. Ensure the services are running via Docker Compose:
    ```bash
    docker compose up -d
    ```
@@ -20,7 +27,7 @@
    # Terminal 2: PHP Portal
    cd php-portal && php -S 0.0.0.0:8080
    ```
-2. Open your web browser to `http://localhost:8080`.
+2. Open your web browser to `http://localhost:8080/chat`.
 
 ---
 
