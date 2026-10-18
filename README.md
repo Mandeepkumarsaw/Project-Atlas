@@ -108,7 +108,34 @@ flowchart TD
 
 ---
 
-## 4. Quickstart Guide
+## 4. Design Decisions & Architecture Trade-Offs
+
+### Key Design Decisions
+
+1. **Deterministic LangGraph DAG over Autonomous ReAct Loops:**
+   - *Rationale:* In enterprise market research consulting, open-ended autonomous tool-calling loops present unacceptable hallucination and data leakage risks. A typed, stateful Directed Acyclic Graph (DAG) enforces that security guardrails, entitlement checks, deterministic arithmetic, and fact-checking critics execute systematically on every turn.
+2. **Pre-Retrieval Entitlement Filtering at the Vector Database Boundary:**
+   - *Rationale:* Post-retrieval filtering (prompting the LLM to ignore unentitled chunks) is fundamentally leaky and vulnerable to prompt injection. Filtering occurs physically at the Qdrant query layer using server-side payload matchers (`report_id IN (client_allowlist)`), ensuring unauthorized proprietary chunks never enter the model prompt context.
+3. **Pure Python Deterministic Calculation Engine:**
+   - *Rationale:* Large Language Models notoriously struggle with multi-year compound interest calculations ($\text{Start} \times (1 + r)^n$) and rounding precision. All mathematical inquiries (CAGR, regional shares, interval projections) are routed to pure Python arithmetic functions with explicit base-year ambiguity disclosure.
+4. **Decoupled Architecture with Legacy CodeIgniter 3 Frontend:**
+   - *Rationale:* Preserves existing enterprise PHP infrastructure while isolating modern AI workloads. Communication is governed via authenticated server-to-server REST endpoints (`X-API-Key`), retaining CSRF protection, dynamic origin/base_url handling for cloud proxies, and instant optimistic UI feedback.
+5. **Fail-Closed SQL Security Guardrail with Read-Only Least Privilege:**
+   - *Rationale:* AI assistants with database access must never mutate records or leak confidential PII. Queries execute under a dedicated `atlas_readonly` user with AST parsing that strictly blocks DDL/DML statements (`DROP`, `DELETE`, `UPDATE`) and masks sensitive client billing tables.
+
+### Architecture Trade-Offs
+
+| Decision | Trade-Off Made | Engineering Rationale |
+| :--- | :--- | :--- |
+| **Deterministic State Graph vs. Open-Ended Agent** | Trades unconstrained open-ended conversation flexibility for 100% compliance, zero data leakage, and predictable policy enforcement. | Market research consultancies require strict governance and auditability over unpredictable multi-step tool exploration. |
+| **Fail-Closed Extrapolation Refusal vs. Generative Extrapolation** | Trades immediate conversational answers for year 2035+ inquiries in exchange for factual integrity via human analyst escalation tickets. | Enterprise decision-makers cannot make capital investment decisions based on unbounded AI mathematical hallucination. |
+| **Local Dense Embeddings vs. External API Embeddings** | Trades a ~1.5s initial startup ingestion latency for 100% offline self-contained reliability, zero per-query embedding API costs, and data sovereignty. | Eliminates external third-party data egress risks for proprietary research publications. |
+| **Form POST with DB Hydration vs. WebSocket Streaming** | Trades token-by-token character streaming for robust session persistence, CSRF security, and zero websocket connection dropouts over tunnels. | Guarantees legacy PHP compatibility and rock-solid state recovery while client-side spinners provide instant visual feedback. |
+| **Strict Negative Averaging Guardrail vs. Permissive Synthesis** | Trades synthetic metric blending for explicit scope differentiation between full-solution and hardware-only reports. | Averaging structurally incompatible scopes (e.g., $4.21B full-solution vs $3.87B hardware) distorts market realities. |
+
+---
+
+## 5. Quickstart Guide
 
 ### Option 0: Live Hosted Cloud Evaluation (Fastest — No Installation Needed)
 Access the live deployment directly in your browser:
@@ -178,7 +205,7 @@ Access the live deployment directly in your browser:
 
 ---
 
-## 5. Report Corpus & Benchmark Metrics
+## 6. Report Corpus & Benchmark Metrics
 
 The repository includes seven complete market research reports exceeding the assignment requirements:
 
@@ -194,7 +221,7 @@ The repository includes seven complete market research reports exceeding the ass
 
 ---
 
-## 6. Core Security & Entitlement Trust Model
+## 7. Core Security & Entitlement Trust Model
 
 ### 1. Pre-Retrieval Vector Filtering (C-01 vs C-02)
 - **Client C-01 (Northwind Utilities):** Entitled to `R-101`, `R-103`, and public excerpt `R-102`.
@@ -213,7 +240,7 @@ The repository includes seven complete market research reports exceeding the ass
 
 ---
 
-## 7. Deterministic Calculations & Projections
+## 8. Deterministic Calculations & Projections
 
 When asked *"What might the APAC market be worth in 2030 based on R-101?"*:
 $$\text{Global}_{2030} = 4.21 \times (1 + 0.112)^6 = \text{USD 7.98 Billion}$$
@@ -225,7 +252,7 @@ $$\text{APAC}_{2030} = 7.98 \times 0.38 = \text{USD 3.03 Billion}$$
 
 ---
 
-## 8. Evaluation & Test Suite
+## 9. Evaluation & Test Suite
 
 The automated evaluation harness executes 25 multi-category benchmark questions with deep schema assertions and active database mutation verification:
 
@@ -247,7 +274,7 @@ Authoritative machine-readable evaluation telemetry is saved to [evaluation/eval
 
 ---
 
-## 9. API Reference
+## 10. API Reference
 
 All protected endpoints require the `X-API-Key` header:
 
@@ -258,7 +285,7 @@ All protected endpoints require the `X-API-Key` header:
 
 ---
 
-## 10. Repository Documentation
+## 11. Repository Documentation
 
 - [docs/failure-analysis.md](docs/failure-analysis.md) — Comprehensive technical post-mortem of six genuine failure cases encountered and remediated during engineering.
 - [docs/architecture.md](docs/architecture.md) — Architectural diagrams, state machine graph, and trust boundaries.
@@ -270,7 +297,7 @@ All protected endpoints require the `X-API-Key` header:
 
 ---
 
-## 11. Known Limitations & Environmental Prerequisites
+## 12. Known Limitations & Environmental Prerequisites
 
 1. **Docker Daemon Access:** In Windows host environments, executing live multi-container orchestration via `docker compose up` requires an elevated Docker Desktop service (`com.docker.service`). The repository provides automated AST and YAML configuration tests (`test_portal_and_ops_phase4.py`) that validate compose port bindings, health checks, bridge networks, and MySQL configurations statically without requiring elevation.
 2. **Local Standalone Execution:** In environments where native Docker or MySQL 8.0 services are offline, Project Atlas automatically and safely activates its fail-closed local test engines (SQLite with `PRAGMA query_only = ON` for read-only SQL, in-memory vector storage for Qdrant, and `standalone_bootstrap.php` for CodeIgniter 3).
