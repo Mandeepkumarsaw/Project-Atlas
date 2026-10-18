@@ -1,7 +1,7 @@
-from fastapi import Header, HTTPException, status, Depends
+from fastapi import Header, HTTPException, status
 from sqlalchemy.orm import Session
 from app.config import settings
-from app.services.db import get_db, Client
+from app.services.db import SessionLocal, Client
 
 
 def verify_api_key(x_api_key: str = Header(default=None, alias="X-API-Key")) -> str:
@@ -15,9 +15,14 @@ def verify_api_key(x_api_key: str = Header(default=None, alias="X-API-Key")) -> 
     return x_api_key
 
 
-def validate_client_context(client_id: str, db: Session = Depends(get_db)) -> Client:
+def validate_client_context(client_id: str, db: Session | None = None) -> Client:
     """Verify that client_id corresponds to a valid registered client in MySQL."""
-    client = db.query(Client).filter(Client.client_id == client_id).first()
+    if db is None:
+        with SessionLocal() as session:
+            client = session.query(Client).filter(Client.client_id == client_id).first()
+    else:
+        client = db.query(Client).filter(Client.client_id == client_id).first()
+
     if not client:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

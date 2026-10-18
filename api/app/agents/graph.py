@@ -173,7 +173,7 @@ def writer_node(state: AgentState) -> dict:
 # Routing logic for conditional edges
 def route_question(state: AgentState) -> str:
     decision = state.get("router_decision")
-    if decision in ["unsafe", "out_of_scope"]:
+    if decision in ["unsafe", "out_of_scope", "greeting"]:
         return "refusal"
     elif decision == "sql_aggregate":
         return "sql_tool"

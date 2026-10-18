@@ -318,8 +318,8 @@ HTML_CONTENT = """<!DOCTYPE html>
                 typingMsg.remove();
 
                 if (!response.ok) {
-                    const err = await response.json();
-                    renderError(err.detail || "Error querying report assistant");
+                    const err = await response.json().catch(() => ({}));
+                    renderError(err.detail || ("Server Error (HTTP " + response.status + ")"));
                     return;
                 }
 
@@ -329,7 +329,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 
             } catch (err) {
                 typingMsg.remove();
-                renderError("Network error: Could not reach Project Atlas AI service.");
+                renderError("Network error: " + (err.message || "Could not reach server"));
             }
         }
 

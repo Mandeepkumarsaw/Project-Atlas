@@ -2,7 +2,7 @@ import re
 from typing import Literal
 
 QueryCategory = Literal[
-    "factual", "comparison", "calculation", "sql_aggregate", "unsafe", "out_of_scope"
+    "factual", "comparison", "calculation", "sql_aggregate", "unsafe", "out_of_scope", "greeting"
 ]
 
 
@@ -12,6 +12,11 @@ def classify_question(question: str) -> QueryCategory:
     Prioritizes safety and prompt-injection detection before domain routing.
     """
     q = question.lower().strip()
+
+    # 0. Friendly Greeting
+    greeting_patterns = [r"^(hi|hello|hey|good\s+morning|good\s+afternoon|good\s+evening)\b", r"^who\s+are\s+you"]
+    if any(re.search(pat, q) for pat in greeting_patterns):
+        return "greeting"
 
     # 1. Unsafe / Security Jailbreak check (Including confidential email inquiries)
     unsafe_patterns = [

@@ -21,6 +21,21 @@ def compose_grounded_answer(
     derived_values: list[DerivedValue] = []
     q_lower = question.lower()
 
+    # Case 0: Friendly Greeting
+    if router_decision == "greeting":
+        answer = (
+            f"Hello! I am **Project Atlas Copilot**, an AI market research assistant for **Cognitive Market Research and Consulting**.\n\n"
+            f"You are currently authenticated under **{client_id}**. I can answer empirical market questions, "
+            f"analyze source discrepancies, verify citations, and perform deterministic compound projections "
+            f"grounded in your entitled library reports.\n\n"
+            f"**Suggested inquiries to try:**\n"
+            f"- *What was the global smart water meter market size in 2024?*\n"
+            f"- *Why do two reports provide different market-size figures?*\n"
+            f"- *What might the APAC market be worth in 2030?*\n"
+            f"- *Which sector has the most reports in the library?*"
+        )
+        return answer, citations, derived_values
+
     # Case 1: Unsafe / Refusal
     if router_decision == "unsafe":
         answer = (
