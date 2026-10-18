@@ -5,21 +5,24 @@ services:
     container_name: atlas_mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: atlas_root_secret
-      MYSQL_DATABASE: atlas_db
-      MYSQL_USER: atlas_app
-      MYSQL_PASSWORD: atlas_app_secret
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-atlas_root_secret}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-atlas_db}
+      MYSQL_USER: ${MYSQL_USER:-atlas_app}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-atlas_app_secret}
     ports:
-      - "3306:3306"
+      # Restrict to loopback interface to prevent public internet exposure
+      - "127.0.0.1:3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-patlas_root_secret"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$${MYSQL_ROOT_PASSWORD:-atlas_root_secret}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - atlas_net
 
   # 2. Vector Database (Qdrant)
   qdrant:
@@ -27,8 +30,9 @@ services:
     container_name: atlas_qdrant
     restart: unless-stopped
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      # Restrict to loopback interface to prevent public internet exposure
+      - "127.0.0.1:6333:6333"
+      - "127.0.0.1:6334:6334"
     volumes:
       - qdrant_data:/qdrant/storage
     healthcheck:
@@ -36,6 +40,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - atlas_net
 
   # 3. Python AI Backend (FastAPI + LangGraph)
   api:
@@ -45,23 +51,28 @@ services:
     container_name: atlas_api
     restart: unless-stopped
     environment:
-      - ENVIRONMENT=production
+      - ENVIRONMENT=${ENVIRONMENT:-development}
       - API_HOST=0.0.0.0
       - API_PORT=8000
-      - API_KEY=atlas-secret-key-prod-2025
+      - API_KEY=${API_KEY:-atlas-secret-key-prod-2025}
+      - ADMIN_API_KEY=${ADMIN_API_KEY:-atlas-admin-secret-2025}
+      - CLIENT_C01_KEY=${CLIENT_C01_KEY:-atlas-key-c01-2025}
+      - CLIENT_C02_KEY=${CLIENT_C02_KEY:-atlas-key-c02-2025}
+      - CLIENT_C03_KEY=${CLIENT_C03_KEY:-atlas-key-c03-2025}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080,http://localhost:8000}
       - MYSQL_HOST=mysql
       - MYSQL_PORT=3306
-      - MYSQL_DATABASE=atlas_db
-      - MYSQL_USER=atlas_app
-      - MYSQL_PASSWORD=atlas_app_secret
-      - MYSQL_RO_USER=atlas_readonly
-      - MYSQL_RO_PASSWORD=atlas_ro_secret
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-atlas_db}
+      - MYSQL_USER=${MYSQL_USER:-atlas_app}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-atlas_app_secret}
+      - MYSQL_RO_USER=${MYSQL_RO_USER:-atlas_readonly}
+      - MYSQL_RO_PASSWORD=${MYSQL_RO_PASSWORD:-atlas_ro_secret}
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
       - QDRANT_COLLECTION=market_research_reports
-      - LLM_PROVIDER=ollama
-      - LLM_MODEL=mistral:latest
-      - LLM_BASE_URL=http://host.docker.internal:11434/v1
+      - LLM_PROVIDER=${LLM_PROVIDER:-ollama}
+      - LLM_MODEL=${LLM_MODEL:-mistral:latest}
+      - LLM_BASE_URL=${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
       - CONFIDENCE_THRESHOLD=0.70
     ports:
       - "8000:8000"
@@ -70,8 +81,16 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import urllib.request; sys.exit(0 if urllib.request.urlopen(\"http://localhost:8000/health\").getcode() in [200, 503] else 1)'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - atlas_net
 
   # 4. Frontend Portal (PHP CodeIgniter 3)
   php:
@@ -81,19 +100,28 @@ services:
     container_name: atlas_php_portal
     restart: unless-stopped
     environment:
-      - CI_ENV=production
+      - CI_ENV=${CI_ENV:-production}
       - API_BASE_URL=http://api:8000
-      - API_KEY=atlas-secret-key-prod-2025
+      - API_KEY=${API_KEY:-atlas-secret-key-prod-2025}
       - MYSQL_HOST=mysql
-      - MYSQL_DATABASE=atlas_db
-      - MYSQL_USER=atlas_app
-      - MYSQL_PASSWORD=atlas_app_secret
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-atlas_db}
+      - MYSQL_USER=${MYSQL_USER:-atlas_app}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-atlas_app_secret}
     ports:
       - "8080:80"
     depends_on:
-      - api
-      - mysql
+      api:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+    networks:
+      - atlas_net
+
+networks:
+  atlas_net:
+    driver: bridge
 
 volumes:
   mysql_data:
   qdrant_data:
+

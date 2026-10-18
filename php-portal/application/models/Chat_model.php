@@ -38,16 +38,46 @@ class Chat_model extends CI_Model {
     }
 
     /**
-     * Record thumbs up / thumbs down feedback
+     * Save a user or assistant chat message to MySQL chat_messages table
      */
-    public function record_feedback($message_id, $conversation_id, $client_id, $rating, $comments = '') {
+    public function save_chat_message($conversation_id, $client_id, $role, $content, $citations = [], $confidence = null, $conflicts = [], $derived_values = [], $status = 'success') {
         $data = [
-            'message_id' => $message_id,
             'conversation_id' => $conversation_id,
             'client_id' => $client_id,
-            'rating' => (int)$rating,
-            'comments' => $comments
+            'role' => $role,
+            'content' => $content,
+            'citations_json' => !empty($citations) ? json_encode($citations) : null,
+            'confidence' => ($confidence !== null) ? (float)$confidence : null,
+            'conflicts_json' => !empty($conflicts) ? json_encode($conflicts) : null,
+            'derived_values_json' => !empty($derived_values) ? json_encode($derived_values) : null,
+            'status' => $status
+        ];
+        $this->db->insert('chat_messages', $data);
+        return $this->db->insert_id();
+    }
+
+    /**
+     * Record thumbs up (+1) / thumbs down (-1) feedback with tenant validation
+     */
+    public function record_feedback($message_id, $conversation_id, $client_id, $rating, $comments = '') {
+        // Enforce tenant boundary: verify message exists and belongs to the authenticated client
+        $msg = $this->db->get_where('chat_messages', [
+            'id' => (int)$message_id,
+            'client_id' => $client_id
+        ])->row();
+
+        if (!$msg) {
+            return false;
+        }
+
+        $data = [
+            'message_id' => (int)$message_id,
+            'conversation_id' => $conversation_id,
+            'client_id' => $client_id,
+            'rating' => ((int)$rating > 0) ? 1 : -1,
+            'comments' => $comments ? substr(trim($comments), 0, 1000) : null
         ];
         return $this->db->insert('feedback', $data);
     }
 }
+

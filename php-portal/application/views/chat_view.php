@@ -206,9 +206,23 @@
                                         </div>
                                     </div>
                                 <?php endif; ?>
+
+                                <!-- Thumbs Up / Down Feedback -->
+                                <?php if ($msg['role'] === 'assistant' && !empty($msg['id'])): ?>
+                                    <div class="feedback-actions mt-2 pt-2 border-top d-flex align-items-center gap-2" id="feedback-block-<?php echo (int)$msg['id']; ?>">
+                                        <span class="small text-muted me-1">Was this helpful?</span>
+                                        <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" onclick="submitFeedback(<?php echo (int)$msg['id']; ?>, 1)">
+                                            <i class="bi bi-hand-thumbs-up"></i> Helpful
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" onclick="submitFeedback(<?php echo (int)$msg['id']; ?>, -1)">
+                                            <i class="bi bi-hand-thumbs-down"></i> Not Helpful
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
+
                 </div>
 
                 <!-- Input Box -->
@@ -288,6 +302,34 @@
         if (stream) {
             stream.scrollTop = stream.scrollHeight;
         }
+
+        function submitFeedback(messageId, rating) {
+            const csrfName = "<?php echo $this->security->get_csrf_token_name(); ?>";
+            const csrfHash = "<?php echo $this->security->get_csrf_hash(); ?>";
+            const formData = new URLSearchParams();
+            formData.append('message_id', messageId);
+            formData.append('rating', rating);
+            formData.append(csrfName, csrfHash);
+
+            fetch("<?php echo site_url('chat/feedback'); ?>", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData.toString()
+            })
+            .then(res => res.json())
+            .then(data => {
+                const block = document.getElementById('feedback-block-' + messageId);
+                if (block) {
+                    block.innerHTML = '<span class="badge bg-success text-white py-1 px-2 small"><i class="bi bi-check-circle me-1"></i> Feedback recorded</span>';
+                }
+            })
+            .catch(err => {
+                console.error('Feedback submission error:', err);
+            });
+        }
     </script>
+
 </body>
 </html>

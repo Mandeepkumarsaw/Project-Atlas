@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from sqlalchemy import text
 from app.schemas.health import HealthResponse
 from app.config import settings
@@ -10,7 +10,7 @@ router = APIRouter(tags=["Health"])
 
 
 @router.get("/health", response_model=HealthResponse)
-def get_health():
+def get_health(response: Response):
     # Check MySQL / SQLite
     mysql_status = "healthy"
     try:
@@ -29,12 +29,17 @@ def get_health():
         logger.warning(f"Vector database health check failed: {e}")
         qdrant_status = "unhealthy"
 
+    is_healthy = (mysql_status == "healthy" and qdrant_status == "healthy")
+    if not is_healthy:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
     return HealthResponse(
-        status="ok" if mysql_status == "healthy" and qdrant_status == "healthy" else "degraded",
+        status="ok" if is_healthy else "degraded",
         mysql=mysql_status,
         vector_db=qdrant_status,
         model=settings.LLM_MODEL,
         environment=settings.ENVIRONMENT,
         version="1.0.0"
     )
+
 

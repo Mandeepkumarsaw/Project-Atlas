@@ -3,16 +3,27 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Chat extends CI_Controller {
 
+    protected $allowed_clients = ['C-01', 'C-02', 'C-03'];
+
     public function __construct() {
         parent::__construct();
         $this->load->library('session');
         $this->load->library('api_client');
+        $this->load->model('chat_model');
         $this->load->helper(['url', 'form', 'security']);
     }
 
     public function index() {
-        // Default client is C-01 (Northwind Utilities) unless switched
-        $client_id = $this->input->get('client_id') ?: $this->session->userdata('client_id') ?: 'C-01';
+        // Enforce validated client ID
+        $requested_client = $this->input->get('client_id', TRUE);
+        if ($requested_client && in_array($requested_client, $this->allowed_clients, true)) {
+            $client_id = $requested_client;
+        } else {
+            $client_id = $this->session->userdata('client_id');
+            if (!$client_id || !in_array($client_id, $this->allowed_clients, true)) {
+                $client_id = 'C-01';
+            }
+        }
         $this->session->set_userdata('client_id', $client_id);
 
         $conversation_id = $this->session->userdata('conversation_id');
@@ -41,7 +52,7 @@ class Chat extends CI_Controller {
 
     public function switch_client() {
         $client_id = $this->input->post('client_id', TRUE);
-        if ($client_id) {
+        if ($client_id && in_array($client_id, $this->allowed_clients, true)) {
             $this->session->set_userdata('client_id', $client_id);
             // Clear current conversation on client switch to guarantee isolation
             $this->session->set_userdata('conversation_id', 'conv-' . substr(md5(uniqid(rand(), true)), 0, 8));
@@ -59,20 +70,45 @@ class Chat extends CI_Controller {
             redirect('/chat');
         }
 
+        // Persist conversation to MySQL if not already created
+        $this->chat_model->get_or_create_conversation($conversation_id, $client_id);
+
+        // Save user message to MySQL
+        $user_msg_id = $this->chat_model->save_chat_message(
+            $conversation_id,
+            $client_id,
+            'user',
+            $question
+        );
+
         $history = $this->session->userdata('chat_history') ?: [];
 
         // Append user question
         $history[] = [
+            'id' => $user_msg_id,
             'role' => 'user',
             'content' => $question,
             'time' => date('H:i')
         ];
 
-        // Call Python FastAPI service
+        // Call Python FastAPI service via server-side cURL
         $response = $this->api_client->send_chat_query($client_id, $conversation_id, $question);
 
         if ($response && isset($response['success']) && $response['success']) {
+            $asst_msg_id = $this->chat_model->save_chat_message(
+                $conversation_id,
+                $client_id,
+                'assistant',
+                $response['answer'],
+                isset($response['citations']) ? $response['citations'] : [],
+                isset($response['confidence']) ? $response['confidence'] : 0.0,
+                isset($response['conflicts']) ? $response['conflicts'] : [],
+                isset($response['derived_values']) ? $response['derived_values'] : [],
+                !empty($response['escalated']) ? 'escalated' : 'success'
+            );
+
             $history[] = [
+                'id' => $asst_msg_id,
                 'role' => 'assistant',
                 'content' => $response['answer'],
                 'citations' => isset($response['citations']) ? $response['citations'] : [],
@@ -84,9 +120,23 @@ class Chat extends CI_Controller {
                 'time' => date('H:i')
             ];
         } else {
+            $err_msg = isset($response['error']) ? $response['error'] : 'The report assistant is temporarily unavailable. Please retry later.';
+            $asst_msg_id = $this->chat_model->save_chat_message(
+                $conversation_id,
+                $client_id,
+                'assistant',
+                $err_msg,
+                [],
+                0.0,
+                [],
+                [],
+                'error'
+            );
+
             $history[] = [
+                'id' => $asst_msg_id,
                 'role' => 'assistant',
-                'content' => isset($response['error']) ? $response['error'] : 'The report assistant is temporarily unavailable. Please retry later.',
+                'content' => $err_msg,
                 'citations' => [],
                 'confidence' => 0.0,
                 'conflicts' => [],
@@ -107,11 +157,33 @@ class Chat extends CI_Controller {
     }
 
     public function feedback() {
+        $client_id = $this->session->userdata('client_id') ?: 'C-01';
+        $conversation_id = $this->session->userdata('conversation_id') ?: 'conv-default';
+        $message_id = (int)$this->input->post('message_id', TRUE);
         $rating = (int)$this->input->post('rating', TRUE);
         $comment = $this->input->post('comment', TRUE);
-        // Returns JSON confirmation
-        $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode(['status' => 'success', 'message' => 'Feedback recorded']));
+
+        if (!$message_id || !in_array($rating, [1, -1], true)) {
+            $this->output
+                ->set_status_header(400)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Invalid feedback parameters.']));
+            return;
+        }
+
+        // Persist to MySQL with tenant ownership validation
+        $saved = $this->chat_model->record_feedback($message_id, $conversation_id, $client_id, $rating, $comment);
+
+        if ($saved) {
+            $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'success', 'message' => 'Feedback successfully recorded in MySQL.']));
+        } else {
+            $this->output
+                ->set_status_header(403)
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Feedback rejected: unauthorized message or tenant mismatch.']));
+        }
     }
 }
+
