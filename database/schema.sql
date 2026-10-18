@@ -98,7 +98,7 @@ CREATE TABLE IF NOT EXISTS escalations (
     conversation_id VARCHAR(64) NOT NULL,
     client_id VARCHAR(32) NOT NULL,
     question TEXT NOT NULL,
-    reason VARCHAR(255) NOT NULL,
+    reason TEXT NOT NULL,
     status ENUM('OPEN', 'IN_REVIEW', 'RESOLVED') DEFAULT 'OPEN',
     analyst_assigned VARCHAR(100) DEFAULT 'Senior Research Analyst',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

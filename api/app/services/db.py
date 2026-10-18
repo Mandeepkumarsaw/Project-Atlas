@@ -90,7 +90,7 @@ class Escalation(Base):
     conversation_id = Column(String(64), nullable=False)
     client_id = Column(String(32), ForeignKey("clients.client_id"), nullable=False)
     question = Column(Text, nullable=False)
-    reason = Column(String(255), nullable=False)
+    reason = Column(Text, nullable=False)
     status = Column(String(20), default="OPEN")  # 'OPEN', 'IN_REVIEW', 'RESOLVED'
     analyst_assigned = Column(String(100), default="Senior Research Analyst")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -303,7 +303,7 @@ def create_escalation_ticket(client_id: str, conversation_id: str, question: str
             conversation_id=conversation_id,
             client_id=client_id,
             question=question,
-            reason=reason,
+            reason=reason[:2000] if reason else "Unspecified escalation reason",
             status="OPEN",
             analyst_assigned="Senior Research Analyst"
         )
