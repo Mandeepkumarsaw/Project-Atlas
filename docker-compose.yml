@@ -11,7 +11,7 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-atlas_app_secret}
     ports:
       # Restrict to loopback interface to prevent public internet exposure
-      - "127.0.0.1:3306:3306"
+      - "127.0.0.1:3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -82,7 +82,7 @@ services:
       qdrant:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "python -c 'import urllib.request; sys.exit(0 if urllib.request.urlopen(\"http://localhost:8000/health\").getcode() in [200, 503] else 1)'"]
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
       interval: 5s
       timeout: 5s
       retries: 10
