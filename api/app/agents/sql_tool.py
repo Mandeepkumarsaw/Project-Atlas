@@ -10,8 +10,8 @@ def run_sector_aggregate_query(question: str, client_id: str | None = None) -> T
     """
     q = question.lower().strip()
 
-    # If the user prompt directly attempted an SQL statement (e.g. DROP, DELETE, or SELECT)
-    if any(k in q for k in ["drop table", "delete from", "insert into", "alter table", "truncate", "select"]):
+    # If the user prompt directly attempted an SQL statement (e.g. DROP, DELETE, INSERT, UPDATE, or raw SELECT)
+    if any(k in q for k in ["drop", "delete", "insert", "alter", "truncate", "update", "select"]):
         # Validate directly against SQL guard
         success, result = validate_and_execute_safe_sql(question, client_id=client_id)
         if not success:

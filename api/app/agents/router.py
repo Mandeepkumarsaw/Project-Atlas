@@ -57,8 +57,11 @@ def classify_question(question: str) -> QueryCategory:
         r"sectors\s+available",
         r"which\s+reports\s+exist",
         r"drop\s+table",
-        r"delete\s+from",
+        r"delete\s+(all\s+)?(rows\s+)?(from\s+)?",
+        r"truncate\s+",
+        r"alter\s+table",
         r"insert\s+into",
+        r"update\s+\w+\s+set",
         r"union\s+select",
         r"select\s+\*\s+from"
     ]

@@ -1,5 +1,12 @@
+import re
 from typing import Any
 from app.schemas.chat import Citation, DerivedValue
+
+
+def clean_document_content(text: str) -> str:
+    """Strip XML structural delimiters and whitespace from text chunks."""
+    cleaned = re.sub(r"</?document_content[^>]*>", "", text).strip()
+    return cleaned
 
 
 def compose_grounded_answer(
@@ -74,11 +81,13 @@ def compose_grounded_answer(
 
     # Case 5: Escalation required
     if escalation_ticket_id:
+        detail_msg = ""
+        if calc_result and not calc_result[0]:
+            detail_msg = f"{calc_result[2]}\n\n"
         answer = (
-            f"Analyst Escalation Ticket Created ({escalation_ticket_id}): This inquiry involves ambiguous "
-            f"extrapolations, potential source discrepancies, or parameters outside validated study models. "
-            f"A Senior Market Research Analyst has been assigned to evaluate this request and will respond "
-            f"to your portal inbox with verified quantitative findings."
+            f"{detail_msg}"
+            f"**Analyst Escalation Ticket Reference: `{escalation_ticket_id}`**\n"
+            f"A Senior Market Research Analyst has been assigned to evaluate this inquiry and provide verified findings."
         )
         return answer, citations, derived_values
 
@@ -207,13 +216,16 @@ def compose_grounded_answer(
     # Evidence synthesis
     if evidence_chunks:
         answer_lines = ["Based on authorized market research records:"]
-        for chunk in evidence_chunks[:3]:
+        for chunk in evidence_chunks[:4]:
             r_id = chunk.get("report_id")
             pg = chunk.get("page", 1)
-            txt = chunk.get("text", "").strip().replace("\n", " ")
-            answer_lines.append(f"\n- **Report {r_id} (Page {pg}):** {txt[:200]}...")
-            citations.append(Citation(report_id=r_id, page=pg, claim=f"Authoritative passage from {r_id} page {pg}"))
-        return "\n".join(answer_lines), citations, derived_values
+            raw = chunk.get("raw_text") or chunk.get("text", "")
+            clean_txt = clean_document_content(raw).strip().replace("\n", " ")
+            if len(clean_txt) > 20:
+                answer_lines.append(f"\n- **Report {r_id} (Page {pg}):** {clean_txt[:250]}...")
+                citations.append(Citation(report_id=r_id, page=pg, claim=f"Authoritative passage from {r_id} page {pg}"))
+        if len(answer_lines) > 1:
+            return "\n".join(answer_lines), citations, derived_values
 
     if upgrade_guidance:
         return upgrade_guidance, citations, derived_values

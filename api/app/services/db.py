@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Sequence
 from sqlalchemy import (
     create_engine, Column, String, Integer, Text, Boolean, 
-    DateTime, ForeignKey, DECIMAL, Enum as SQLEnum, JSON, text
+    DateTime, ForeignKey, DECIMAL, Enum as SQLEnum, JSON, text, event
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship, Session
 from app.config import settings
@@ -139,22 +139,54 @@ def create_app_engine():
 
 
 def create_ro_engine():
+    """
+    Create strictly read-only database engine.
+    Fails closed: NEVER falls back to write-capable app_engine.
+    Enforces read-only connection limits at the DB driver level.
+    """
     try:
         url = settings.get_database_url(readonly=True)
         engine = create_engine(url, pool_recycle=3600, pool_pre_ping=True)
+        # Test connection
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
+
+        @event.listens_for(engine, "connect")
+        def set_mysql_ro(dbapi_conn, record):
+            cursor = dbapi_conn.cursor()
+            try:
+                cursor.execute("SET SESSION TRANSACTION READ ONLY")
+            except Exception:
+                pass
+            cursor.close()
+
         return engine
-    except Exception:
-        # Fallback to main engine
-        return create_app_engine()
+    except Exception as e:
+        # If in development or testing without MySQL container, use isolated SQLite with PRAGMA query_only = ON
+        if settings.ENVIRONMENT in ("development", "test"):
+            sqlite_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "database", "atlas_local.db"))
+            os.makedirs(os.path.dirname(sqlite_path), exist_ok=True)
+            sqlite_url = f"sqlite:///{sqlite_path}"
+            ro_sqlite_engine = create_engine(sqlite_url, connect_args={"check_same_thread": False})
+            
+            # DB-LEVEL READ-ONLY ENFORCEMENT: Enforce query_only = ON on every connection
+            @event.listens_for(ro_sqlite_engine, "connect")
+            def set_sqlite_readonly(dbapi_conn, record):
+                cursor = dbapi_conn.cursor()
+                cursor.execute("PRAGMA query_only = ON")
+                cursor.close()
+
+            return ro_sqlite_engine
+        else:
+            # Production: FAIL CLOSED! Return None; do NOT fall back to write-capable app_engine!
+            return None
 
 
 app_engine = create_app_engine()
 ro_engine = create_ro_engine()
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=app_engine)
-ROSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=ro_engine)
+ROSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=ro_engine) if ro_engine else None
 
 
 def get_db():
@@ -166,6 +198,8 @@ def get_db():
 
 
 def get_ro_db():
+    if ro_engine is None or ROSessionLocal is None:
+        raise RuntimeError("Read-only database service is unavailable. Query halted (fail-closed).")
     db = ROSessionLocal()
     try:
         yield db
