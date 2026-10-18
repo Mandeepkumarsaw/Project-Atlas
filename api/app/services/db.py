@@ -193,7 +193,8 @@ def init_database_tables():
             r4 = Report(report_id="R-104", title="Commercial Building Energy Management Market 2025", sector="Building Technologies & Utilities", publisher="Smart Facility Analytics", access_type="paid", publication_date=datetime(2025, 3, 5), pages_count=22, summary="Synthetic BEMS study.")
             r5 = Report(report_id="R-105", title="Industrial Water Treatment Equipment Market 2025", sector="Industrial Equipment & Environment", publisher="Industrial Resource Horizons", access_type="paid", publication_date=datetime(2025, 1, 28), pages_count=28, summary="Synthetic industrial water study.")
             r6 = Report(report_id="R-106", title="Smart Grid Analytics Market 2025", sector="Utilities & Infrastructure", publisher="GridTech Insights", access_type="paid", publication_date=datetime(2025, 2, 24), pages_count=20, summary="Synthetic smart grid analytics study.")
-            db.add_all([r1, r2, r3, r4, r5, r6])
+            r7 = Report(report_id="R-107", title="Industrial IoT in Manufacturing: Edge Analytics & Asset Monitoring 2025", sector="Manufacturing & Industrial Automation", publisher="FactoryTech Insights", access_type="paid", publication_date=datetime(2025, 3, 1), pages_count=26, summary="Synthetic IIoT manufacturing study.")
+            db.add_all([r1, r2, r3, r4, r5, r6, r7])
             
             # Seed entitlements:
             # C-01: R-101 and R-103
@@ -213,7 +214,8 @@ def init_database_tables():
             m7 = MarketMetric(report_id="R-104", metric_name="Global BEMS Market Size 2024", metric_value=8.70, unit="USD Billion", base_year=2024, forecast_year=2030, cagr_percent=12.10, geographic_scope="Global", market_scope="Commercial Building Energy Software & Controls")
             m8 = MarketMetric(report_id="R-105", metric_name="Global Industrial Water Treatment Market Size 2024", metric_value=15.30, unit="USD Billion", base_year=2024, forecast_year=2030, cagr_percent=6.90, geographic_scope="Global", market_scope="Industrial Filtration, Membranes & ZLD Equipment")
             m9 = MarketMetric(report_id="R-106", metric_name="Global Smart Grid Analytics Market Size 2024", metric_value=5.60, unit="USD Billion", base_year=2024, forecast_year=2030, cagr_percent=14.50, geographic_scope="Global", market_scope="ADMS, DERMS & Predictive Asset Analytics")
-            db.add_all([m1, m2, m3, m4, m5, m6, m7, m8, m9])
+            m10 = MarketMetric(report_id="R-107", metric_name="Global IIoT Manufacturing Market Size 2024", metric_value=5.12, unit="USD Billion", base_year=2024, forecast_year=2030, cagr_percent=14.30, geographic_scope="Global", market_scope="Industrial IoT Sensors, Edge Gateways & Predictive Maintenance Software")
+            db.add_all([m1, m2, m3, m4, m5, m6, m7, m8, m9, m10])
             
             db.commit()
 

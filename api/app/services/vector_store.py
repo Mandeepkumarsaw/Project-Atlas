@@ -105,13 +105,25 @@ def search_chunks(
     )
 
     try:
-        search_results = client.search(
-            collection_name=col_name,
-            query_vector=query_vector,
-            query_filter=qdrant_filter,
-            limit=top_k,
-            score_threshold=score_threshold
-        )
+        if hasattr(client, "query_points"):
+            res = client.query_points(
+                collection_name=col_name,
+                query=query_vector,
+                query_filter=qdrant_filter,
+                limit=top_k,
+                score_threshold=score_threshold
+            )
+            search_results = res.points
+        elif hasattr(client, "search"):
+            search_results = client.search(
+                collection_name=col_name,
+                query_vector=query_vector,
+                query_filter=qdrant_filter,
+                limit=top_k,
+                score_threshold=score_threshold
+            )
+        else:
+            search_results = []
     except Exception as e:
         # If collection is empty or error
         return []
