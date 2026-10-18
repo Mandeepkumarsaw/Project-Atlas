@@ -21,7 +21,7 @@ The Project Atlas evaluation harness was executed across 25 rigorous test questi
 | **SQL Write Safety Breaches** | **0.0% (0 / 2)** | 0.0% (Zero unauthorized writes) | **PASSED** |
 | **Conflict Detection Rate** | **100.0% (4 / 4)** | > 90% | **PASSED** |
 | **Calculation Accuracy** | **100.0% (4 / 4)** | 100% Deterministic | **PASSED** |
-| **Average Query Latency** | **14.8 ms** | < 30,000 ms (30 seconds) | **PASSED** |
+| **Average Query Latency** | **14.9 ms (p95: 25 ms)** | < 30,000 ms (30 seconds) | **PASSED** |
 | **Estimated Cost / 1,000 Queries** | **$0.0015 USD** | Cost-effective | **PASSED** |
 
 ---

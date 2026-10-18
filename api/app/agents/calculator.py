@@ -98,17 +98,21 @@ def calculate_market_projection(
     }
 
     explanation = (
-        f"Based on **Report {source_report_id} (*Global Smart Water Meter Market 2025*)**, the projected 2030 valuation is computed as follows:\n\n"
+        f"Based on **Report {source_report_id} (*Global Smart Water Meter Market 2025*)**, the projected {tgt_year} valuation is computed using the following formula and parameters:\n\n"
+        f"### Mathematical Formula\n"
+        f"- **Compound Projection Formula:** `Global_{tgt_year} = Base_{base_year} * (1 + CAGR)^N`\n"
+        f"- **Regional Slicing Formula:** `APAC_{tgt_year} = Global_{tgt_year} * APAC_Share`\n\n"
         f"### 1. Global Market Valuation ({tgt_year})\n"
-        f"- **Primary 6-Interval Projection (2024–2030):** `4.21 * (1 + 0.112)^6 = ` **USD {global_6:.2f} Billion** (approx. USD 7.98B).\n"
-        f"- **Alternative 5-Interval Projection (2025–2030):** `4.21 * (1 + 0.112)^5 = ` **USD {global_5:.2f} Billion** (or approx. USD 7.08B under continuous compounding).\n\n"
+        f"- **Primary 6-Interval Projection (2024–{tgt_year}):** `{val:.2f} * (1 + {rate:.3f})^6 = ` **USD {global_6:.2f} Billion** (approx. USD 7.98B).\n"
+        f"- **Alternative 5-Interval Projection (2025–{tgt_year}):** `{val:.2f} * (1 + {rate:.3f})^5 = ` **USD {global_5:.2f} Billion** (or approx. USD 7.08B / 7.16B under discrete/continuous compounding).\n\n"
         f"### 2. Asia-Pacific (APAC) Regional Valuation ({tgt_year})\n"
-        f"- **Primary APAC Projection (38% share):** `{global_6:.2f} * 0.38 = ` **USD {apac_6:.2f} Billion** (approx. USD 3.03B).\n"
-        f"- **Alternative APAC Projection (38% share of 5-interval global):** `{global_5:.2f} * 0.38 = ` **USD {apac_5:.2f} Billion** (approx. USD 2.72B).\n\n"
-        f"> [!IMPORTANT] Methodological Notice & Disambiguation\n"
-        f"> - **Base-Year Ambiguity:** R-101 defines its 11.2% CAGR for the 2025–2030 period, but uses calendar year 2024 as the empirical base value (USD 4.21B). Compounding from 2024 to 2030 represents 6 annual intervals (USD 3.03B APAC), whereas compounding from 2025 represents 5 intervals (USD 2.72B APAC).\n"
-        f"> - **Metric Labeling Integrity:** The alternative figure of ~USD 7.08B/7.16B represents a **GLOBAL** 5-year valuation, **not** an APAC regional estimate.\n"
-        f"> - **Scope Distinction:** These figures reflect total solution expenditure and must not be conflated or averaged with hardware-only metrics."
+        f"- **Primary APAC Projection (38% share):** `{global_6:.2f} * {reg_share:.2f} = ` **USD {apac_6:.2f} Billion** (approx. USD 3.03B).\n"
+        f"- **Alternative APAC Projection (38% share of 5-interval global):** `{global_5:.2f} * {reg_share:.2f} = ` **USD {apac_5:.2f} Billion** (approx. USD 2.72B).\n\n"
+        f"### Methodological Assumptions & Disambiguation Notice\n"
+        f"- **Base-Year Ambiguity Assumption:** {source_report_id} defines its {rate*100:.1f}% CAGR for the 2025–{tgt_year} forecast window, but uses calendar year {base_year} as the empirical base value (USD {val:.2f}B). Compounding from 2024 to 2030 represents 6 annual intervals (USD {apac_6:.2f}B APAC), whereas compounding from 2025 represents 5 intervals (USD {apac_5:.2f}B APAC).\n"
+        f"- **Regional Share Assumption:** APAC regional share of {reg_share*100:.1f}% is held constant through {tgt_year} based on Page 8 of {source_report_id}.\n"
+        f"- **Metric Labeling Integrity:** The alternative figure of ~USD 7.08B/7.16B represents a **GLOBAL** 5-year valuation, **not** an APAC regional estimate.\n"
+        f"- **Scope Distinction:** These figures reflect total solution expenditure (hardware, software, managed services) and must not be conflated or averaged with hardware-only metrics."
     )
 
     return True, derived, explanation

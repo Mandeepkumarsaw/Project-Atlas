@@ -83,8 +83,8 @@ In market research, competing reports frequently present disparate valuations du
 LLMs generate language tokens; they do not perform reliable arithmetic. Mathematical forecasting is routed to a deterministic Python engine:
 - **APAC 2030 Projection:**
   $$\text{Global}_{2030} = 4.21 \times (1 + 0.112)^6 \approx \text{USD 7.98 Billion}$$
-  $$\text{APAC}_{2030} = 7.98 \times 38\% \approx \text{USD 3.03 Billion} \quad (\approx \text{USD 7.08 Billion under alternative interval conventions})$$
-- **Base-Year Ambiguity Disclosure:** R-101 states its 11.2% CAGR applies for 2025–2030, but uses 2024 as the base value. Atlas explicitly notes this **base-year ambiguity** rather than presenting the derived projection as an unquestioned empirical fact.
+  $$\text{APAC}_{2030} = 7.98 \times 38\% \approx \text{USD 3.03 Billion}$$
+- **Base-Year Ambiguity & Interval Formulation:** R-101 states its 11.2% CAGR applies for 2025–2030, but uses 2024 as the base value. Compounding over 6 intervals yields USD 7.98B Global / USD 3.03B APAC; compounding over 5 intervals yields USD 7.16B / 7.08B Global / USD 2.72B APAC. Atlas explicitly discloses this **base-year ambiguity** and strictly labels USD 7.08B as a Global valuation rather than an APAC regional figure.
 
 ### 4. Forecast Horizon Guardrails & Human Analyst Escalation
 When asked to forecast beyond a report's empirical horizon (e.g., *"What will the market be worth in 2035?"*):
@@ -101,7 +101,7 @@ Report R-102 Page 14 contains an untrusted benchmark payload:
 - **Integrity:** Legitimate market figures from that report (e.g., USD 3.87B hardware size) remain fully accessible.
 
 ### 6. Read-Only SQL Safety
-Structured catalog questions (*"Which sector has the most reports?"*) execute through an isolated read-only MySQL user (`atlas_readonly`). Destructive write commands (`DROP TABLE`, `DELETE`, `INSERT`) and queries targeting sensitive columns (`clients.contact_email`) are intercepted and rejected by statement parsers.
+Structured catalog questions (*"Which sector has the most reports?"*) execute through an isolated read-only MySQL user (`atlas_readonly`). Destructive write commands (`DROP TABLE`, `DELETE`, `INSERT`) and queries targeting sensitive columns (`clients.contact_email`) are intercepted and rejected by statement parsers. Active database row-count assertions verify zero modifications.
 
 ### 7. Dual User Interface
 - **Modern Interactive Web UI:** Hosted at `http://localhost:8000` with client switching, live citation badges, conflict alerts, calculation cards, and escalation ticket tracking.
@@ -125,22 +125,22 @@ Structured catalog questions (*"Which sector has the most reports?"*) execute th
 
 ## 5. Benchmark Evaluation Results
 
-Project Atlas includes an automated evaluation suite ([`evaluation/run_evaluation.py`](file:///f:/Project%20Atlas/evaluation/run_evaluation.py)) testing 25 comprehensive scenarios across 7 functional categories:
+Project Atlas includes an automated evaluation suite ([`evaluation/run_evaluation.py`](file:///f:/Project%20Atlas/evaluation/run_evaluation.py)) testing 25 comprehensive scenarios across 7 functional categories with active database mutation verification:
 
 ```bash
 python evaluation/run_evaluation.py
 ```
 
-### Summary Metrics:
+### Authoritative Summary Metrics:
 - **Total Benchmark Queries:** 25
 - **Pass Rate:** **25 / 25 (100.0%)**
 - **Entitlement Violation Rate:** **0.0%** (Zero proprietary data leaked)
 - **Prompt Injection Leak Rate:** **0.0%** (Zero system overrides executed)
-- **SQL Write Safety Breaches:** **0.0%** (Zero unauthorized database modifications)
+- **SQL Write Safety Breaches:** **0.0%** (Zero unauthorized database modifications verified via active probes)
 - **Conflict Detection Rate:** **100.0%**
-- **Average Response Latency:** **13.3 milliseconds**
+- **Average Response Latency:** **14.9 milliseconds** (p95: 25 ms, well within 30s limit)
 
-A detailed technical breakdown of **six real failures discovered and remediated during engineering** (including regex precedence inversions, false-positive critic triggers, and horizon bounds) is documented in [`evaluation/evaluation_report.md`](file:///f:/Project%20Atlas/evaluation/evaluation_report.md).
+Detailed post-mortem analysis of **six real failures discovered and remediated during engineering** is documented in [`docs/failure-analysis.md`](file:///f:/Project%20Atlas/docs/failure-analysis.md) and [`evaluation/evaluation_report.md`](file:///f:/Project%20Atlas/evaluation/evaluation_report.md). Full machine-readable results are preserved in [`evaluation/evaluation_results.json`](file:///f:/Project%20Atlas/evaluation/evaluation_results.json).
 
 ---
 

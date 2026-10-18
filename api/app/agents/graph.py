@@ -124,6 +124,15 @@ def critic_node(state: AgentState) -> dict:
             "error": calc_result[2]
         }
 
+    # Check if SQL execution was rejected by security guardrail (decisive refusal)
+    if sql_result and not sql_result[0]:
+        return {
+            "confidence": 1.0,
+            "conflicts": [],
+            "escalated": False,
+            "error": None
+        }
+
     confidence, conflicts, should_escalate, reason = evaluate_response_grounding(
         question=question,
         draft_answer=draft_answer,
@@ -269,10 +278,10 @@ def run_agent_workflow(client_id: str, conversation_id: str, question: str) -> d
         client_id=client_id,
         role="assistant",
         content=result.get("answer", ""),
-        citations=[c.dict() for c in result.get("citations", [])],
+        citations=[c.model_dump() if hasattr(c, "model_dump") else c.dict() for c in result.get("citations", [])],
         confidence=result.get("confidence", 0.0),
         conflicts=result.get("conflicts", []),
-        derived_values=[d.dict() for d in result.get("derived_values", [])],
+        derived_values=[d.model_dump() if hasattr(d, "model_dump") else d.dict() for d in result.get("derived_values", [])],
         status="escalated" if result.get("escalated") else "success"
     )
 
