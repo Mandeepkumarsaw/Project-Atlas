@@ -1,7 +1,28 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-$config['base_url'] = getenv('CI_BASE_URL') ?: 'http://localhost:8080/';
+// Dynamic base URL detection supporting localhost, 127.0.0.1, reverse proxies, and Cloudflare tunnels
+$protocol = 'http://';
+if ((isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] == 1))
+    || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+    || (isset($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on')) {
+    $protocol = 'https://';
+}
+
+$host = !empty($_SERVER['HTTP_X_FORWARDED_HOST']) ? $_SERVER['HTTP_X_FORWARDED_HOST'] : (!empty($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '');
+if (!empty($host)) {
+    if (strpos($host, ',') !== false) {
+        $host_parts = explode(',', $host);
+        $host = trim($host_parts[0]);
+    }
+    if (preg_match('#^https?://#i', $host)) {
+        $config['base_url'] = rtrim($host, '/') . '/';
+    } else {
+        $config['base_url'] = $protocol . rtrim($host, '/') . '/';
+    }
+} else {
+    $config['base_url'] = getenv('CI_BASE_URL') ?: 'http://localhost:8080/';
+}
 $config['index_page'] = '';
 $config['uri_protocol'] = 'REQUEST_URI';
 $config['url_suffix'] = '';
@@ -59,4 +80,4 @@ $config['csrf_exclude_uris'] = array();
 $config['compress_output'] = FALSE;
 $config['time_reference'] = 'local';
 $config['rewrite_short_tags'] = FALSE;
-$config['proxy_ips'] = '';
+$config['proxy_ips'] = '127.0.0.1,172.16.0.0/12,192.168.0.0/16,10.0.0.0/8';
