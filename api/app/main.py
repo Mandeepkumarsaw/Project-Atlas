@@ -33,14 +33,34 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS configuration for PHP portal and frontend clients
+# CORS configuration: Restricted to explicit allowed origins, rejecting wildcard with credentials
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.get_allowed_origins(),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key", "X-Request-ID"],
 )
+
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import uuid
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Global exception handler ensuring unexpected errors never leak internal stack traces (ATLAS-SEC-001)."""
+    req_id = request.headers.get("X-Request-ID") or f"req-{uuid.uuid4().hex[:8]}"
+    logger.error(
+        f"Unhandled server exception [request_id={req_id}] on {request.method} {request.url.path}: {exc}",
+        exc_info=True
+    )
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": f"An unexpected internal server error occurred. Request ID: {req_id}",
+            "request_id": req_id
+        }
+    )
 
 from app.routes.ui import router as ui_router
 
@@ -50,6 +70,7 @@ app.include_router(health_router)
 app.include_router(ingest_router)
 app.include_router(chat_router)
 app.include_router(escalations_router)
+
 
 
 if __name__ == "__main__":

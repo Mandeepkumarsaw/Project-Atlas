@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.orm import Session
 from app.schemas.escalation import EscalationListResponse, EscalationItem
-from app.security.auth import verify_api_key
+from app.security.auth import get_authenticated_identity, enforce_client_access, AuthenticatedIdentity
 from app.services.db import get_db, Escalation
 
 router = APIRouter(tags=["Escalations"])
@@ -9,13 +9,27 @@ router = APIRouter(tags=["Escalations"])
 
 @router.get("/escalations", response_model=EscalationListResponse)
 def get_escalations(
-    client_id: str | None = Query(default=None, description="Optional client ID filter"),
+    client_id: str | None = Query(default=None, description="Client ID filter (required/bound for non-admin callers)"),
     db: Session = Depends(get_db),
-    _auth: str = Depends(verify_api_key)
+    auth: AuthenticatedIdentity = Depends(get_authenticated_identity)
 ):
+    """
+    Retrieve analyst escalation tickets.
+    Enforces tenant scoping: Non-admin clients only receive tickets belonging to their authenticated identity.
+    Attempts to enumerate or query another client's escalations are rejected with HTTP 403 Forbidden.
+    """
+    # Enforce tenant boundary (raises 403 if client-scoped caller attempts cross-client access)
+    effective_client_id = enforce_client_access(auth, client_id)
+
     query = db.query(Escalation)
-    if client_id:
-        query = query.filter(Escalation.client_id == client_id)
+    if effective_client_id:
+        query = query.filter(Escalation.client_id == effective_client_id)
+    elif not auth.is_admin:
+        # Defense-in-depth: non-admin without effective client ID is rejected
+        raise HTTPException(
+            status_code=403,
+            detail="Forbidden: Client identity must be bound to retrieve escalations."
+        )
 
     records = query.order_by(Escalation.created_at.desc()).all()
     items = [
@@ -34,6 +48,7 @@ def get_escalations(
 
     return EscalationListResponse(
         total=len(items),
-        client_id=client_id,
+        client_id=effective_client_id,
         escalations=items
     )
+

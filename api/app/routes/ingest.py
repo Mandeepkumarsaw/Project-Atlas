@@ -1,7 +1,7 @@
 import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.schemas.ingest import IngestRequest, IngestResponse
-from app.security.auth import verify_api_key
+from app.security.auth import require_admin_role, AuthenticatedIdentity
 from app.ingestion.cli import run_ingestion
 
 logger = logging.getLogger("atlas.ingest")
@@ -11,7 +11,7 @@ router = APIRouter(tags=["Ingestion"])
 @router.post("/ingest", response_model=IngestResponse)
 def trigger_ingestion(
     request: IngestRequest,
-    _auth: str = Depends(verify_api_key)
+    _auth: AuthenticatedIdentity = Depends(require_admin_role)
 ):
     """
     Trigger ingestion of market research reports into the vector database.

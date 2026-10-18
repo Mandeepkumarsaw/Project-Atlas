@@ -17,9 +17,22 @@ class DerivedValue(BaseModel):
 
 
 class ChatRequest(BaseModel):
-    client_id: str = Field(..., description="Authenticated client identifier, e.g. C-01")
-    conversation_id: str = Field(default="conv-default", description="Conversation thread identifier")
+    client_id: str = Field(
+        ...,
+        min_length=2,
+        max_length=32,
+        pattern=r"^[A-Za-z0-9_-]+$",
+        description="Authenticated client identifier, e.g. C-01"
+    )
+    conversation_id: str = Field(
+        default="conv-default",
+        min_length=2,
+        max_length=64,
+        pattern=r"^[A-Za-z0-9_-]+$",
+        description="Conversation thread identifier"
+    )
     question: str = Field(..., min_length=2, max_length=1000, description="User's query")
+
 
 
 class ChatResponse(BaseModel):

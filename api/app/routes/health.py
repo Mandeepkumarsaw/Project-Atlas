@@ -4,6 +4,7 @@ from app.schemas.health import HealthResponse
 from app.config import settings
 from app.services.db import app_engine
 from app.services.vector_store import get_qdrant_client
+from app.observability.logger import logger
 
 router = APIRouter(tags=["Health"])
 
@@ -16,7 +17,8 @@ def get_health():
         with app_engine.connect() as conn:
             conn.execute(text("SELECT 1"))
     except Exception as e:
-        mysql_status = f"unhealthy: {str(e)[:50]}"
+        logger.warning(f"Database health check failed: {e}")
+        mysql_status = "unhealthy"
 
     # Check Qdrant
     qdrant_status = "healthy"
@@ -24,7 +26,8 @@ def get_health():
         client = get_qdrant_client()
         client.get_collections()
     except Exception as e:
-        qdrant_status = f"unhealthy: {str(e)[:50]}"
+        logger.warning(f"Vector database health check failed: {e}")
+        qdrant_status = "unhealthy"
 
     return HealthResponse(
         status="ok" if mysql_status == "healthy" and qdrant_status == "healthy" else "degraded",
@@ -34,3 +37,4 @@ def get_health():
         environment=settings.ENVIRONMENT,
         version="1.0.0"
     )
+

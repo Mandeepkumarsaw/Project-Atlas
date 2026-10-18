@@ -204,7 +204,6 @@ HTML_CONTENT = """<!DOCTYPE html>
     </div>
 
     <script>
-        const API_KEY = "atlas-secret-key-prod-2025";
         let currentClientId = "C-01";
         let conversationId = "conv-" + Math.random().toString(36).substring(2, 10);
 
@@ -302,11 +301,10 @@ HTML_CONTENT = """<!DOCTYPE html>
             stream.scrollTop = stream.scrollHeight;
 
             try {
-                const response = await fetch("/chat", {
+                const response = await fetch("/ui/chat", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                        "X-API-Key": API_KEY
+                        "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
                         client_id: currentClientId,
@@ -397,7 +395,7 @@ HTML_CONTENT = """<!DOCTYPE html>
                     </span>
                     <span class="text-muted small">${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                 </div>
-                <div class="message-text">${data.answer.replace(/\\n/g, "<br>")}</div>
+                <div class="message-text">${escapeHtml(data.answer).replace(/\\n/g, "<br>")}</div>
                 ${conflictsHtml}
                 ${calcsHtml}
                 ${escalationHtml}
@@ -422,9 +420,7 @@ HTML_CONTENT = """<!DOCTYPE html>
 
         async function loadEscalations() {
             try {
-                const res = await fetch(`/escalations?client_id=${currentClientId}`, {
-                    headers: { "X-API-Key": API_KEY }
-                });
+                const res = await fetch(`/ui/escalations?client_id=${encodeURIComponent(currentClientId)}`);
                 if (res.ok) {
                     const data = await res.json();
                     document.getElementById("ticketCount").innerText = data.total;
@@ -465,6 +461,61 @@ HTML_CONTENT = """<!DOCTYPE html>
 </html>
 """
 
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from app.schemas.chat import ChatRequest, ChatResponse
+from app.schemas.escalation import EscalationListResponse, EscalationItem
+from app.security.auth import validate_client_context
+from app.agents.graph import run_agent_workflow
+from app.services.db import get_db, Escalation
+
+
 @router.get("/", response_class=HTMLResponse)
 def get_chat_ui():
     return HTMLResponse(content=HTML_CONTENT)
+
+
+@router.post("/ui/chat", response_model=ChatResponse)
+def ui_chat(req: ChatRequest):
+    """Server-side browser proxy endpoint for interactive UI (no secret API key in browser)."""
+    validate_client_context(req.client_id)
+    result = run_agent_workflow(
+        client_id=req.client_id,
+        conversation_id=req.conversation_id,
+        question=req.question
+    )
+    return ChatResponse(
+        answer=result.get("answer", ""),
+        citations=result.get("citations", []),
+        confidence=result.get("confidence", 0.0),
+        conflicts=result.get("conflicts", []),
+        derived_values=result.get("derived_values", []),
+        escalated=result.get("escalated", False),
+        ticket_id=result.get("ticket_id")
+    )
+
+
+@router.get("/ui/escalations", response_model=EscalationListResponse)
+def ui_escalations(client_id: str, db: Session = Depends(get_db)):
+    """Server-side browser proxy endpoint for interactive UI escalations."""
+    validate_client_context(client_id)
+    records = db.query(Escalation).filter(Escalation.client_id == client_id).order_by(Escalation.created_at.desc()).all()
+    items = [
+        EscalationItem(
+            ticket_id=r.ticket_id,
+            conversation_id=r.conversation_id,
+            client_id=r.client_id,
+            question=r.question,
+            reason=r.reason,
+            status=r.status,
+            analyst_assigned=r.analyst_assigned,
+            created_at=r.created_at.isoformat() if r.created_at else ""
+        )
+        for r in records
+    ]
+    return EscalationListResponse(
+        total=len(items),
+        client_id=client_id,
+        escalations=items
+    )
+
