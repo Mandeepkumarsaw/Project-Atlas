@@ -43,3 +43,4 @@ class ChatResponse(BaseModel):
     derived_values: list[DerivedValue] = Field(default_factory=list, description="Deterministic calculations")
     escalated: bool = Field(default=False, description="Whether inquiry was escalated to research analyst")
     ticket_id: str | None = Field(default=None, description="Escalation ticket ID if escalated")
+    message_id: int | None = Field(default=None, description="Persisted database message ID")

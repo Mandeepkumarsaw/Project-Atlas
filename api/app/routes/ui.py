@@ -387,6 +387,21 @@ HTML_CONTENT = """<!DOCTYPE html>
                 `;
             }
 
+            let feedbackHtml = "";
+            if (data.message_id) {
+                feedbackHtml = `
+                    <div class="feedback-actions mt-2 pt-2 border-top d-flex align-items-center gap-2" id="ui-feedback-${data.message_id}">
+                        <span class="small text-muted me-1">Was this helpful?</span>
+                        <button type="button" class="btn btn-sm btn-outline-success py-0 px-2" title="Thumbs Up" onclick="submitUiFeedback(${data.message_id}, 1)">
+                            <i class="bi bi-hand-thumbs-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2" title="Thumbs Down" onclick="submitUiFeedback(${data.message_id}, -1)">
+                            <i class="bi bi-hand-thumbs-down"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
             box.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <span class="fw-bold small text-muted">
@@ -400,10 +415,34 @@ HTML_CONTENT = """<!DOCTYPE html>
                 ${calcsHtml}
                 ${escalationHtml}
                 ${citationsHtml}
+                ${feedbackHtml}
             `;
 
             stream.appendChild(box);
             stream.scrollTop = stream.scrollHeight;
+        }
+
+        async function submitUiFeedback(messageId, rating) {
+            try {
+                const res = await fetch("/ui/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        message_id: messageId,
+                        conversation_id: conversationId,
+                        client_id: currentClientId,
+                        rating: rating
+                    })
+                });
+                if (res.ok) {
+                    const block = document.getElementById("ui-feedback-" + messageId);
+                    if (block) {
+                        block.innerHTML = '<span class="badge bg-success text-white py-1 px-2 small"><i class="bi bi-check-circle me-1"></i> Feedback recorded</span>';
+                    }
+                }
+            } catch (err) {
+                console.error("Feedback submission error:", err);
+            }
         }
 
         function renderError(msg) {
@@ -461,13 +500,21 @@ HTML_CONTENT = """<!DOCTYPE html>
 </html>
 """
 
+from pydantic import BaseModel
 from fastapi import Depends
 from sqlalchemy.orm import Session
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.schemas.escalation import EscalationListResponse, EscalationItem
 from app.security.auth import validate_client_context
 from app.agents.graph import run_agent_workflow
-from app.services.db import get_db, Escalation
+from app.services.db import get_db, Escalation, Conversation, ChatMessage, Feedback
+
+
+class FeedbackPayload(BaseModel):
+    message_id: int
+    conversation_id: str
+    client_id: str
+    rating: int
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -476,7 +523,7 @@ def get_chat_ui():
 
 
 @router.post("/ui/chat", response_model=ChatResponse)
-def ui_chat(req: ChatRequest):
+def ui_chat(req: ChatRequest, db: Session = Depends(get_db)):
     """Server-side browser proxy endpoint for interactive UI (no secret API key in browser)."""
     validate_client_context(req.client_id)
     result = run_agent_workflow(
@@ -484,6 +531,37 @@ def ui_chat(req: ChatRequest):
         conversation_id=req.conversation_id,
         question=req.question
     )
+
+    # Persist conversation and messages in MySQL for seamless feedback logging
+    conv = db.query(Conversation).filter(Conversation.conversation_id == req.conversation_id).first()
+    if not conv:
+        conv = Conversation(
+            conversation_id=req.conversation_id,
+            client_id=req.client_id,
+            title=req.question[:60]
+        )
+        db.add(conv)
+        db.flush()
+
+    user_msg = ChatMessage(
+        conversation_id=req.conversation_id,
+        client_id=req.client_id,
+        role="user",
+        content=req.question
+    )
+    db.add(user_msg)
+
+    asst_msg = ChatMessage(
+        conversation_id=req.conversation_id,
+        client_id=req.client_id,
+        role="assistant",
+        content=result.get("answer", ""),
+        confidence=result.get("confidence"),
+        status="escalated" if result.get("escalated") else "success"
+    )
+    db.add(asst_msg)
+    db.commit()
+
     return ChatResponse(
         answer=result.get("answer", ""),
         citations=result.get("citations", []),
@@ -491,8 +569,24 @@ def ui_chat(req: ChatRequest):
         conflicts=result.get("conflicts", []),
         derived_values=result.get("derived_values", []),
         escalated=result.get("escalated", False),
-        ticket_id=result.get("ticket_id")
+        ticket_id=result.get("ticket_id"),
+        message_id=asst_msg.id
     )
+
+
+@router.post("/ui/feedback")
+def ui_feedback(payload: FeedbackPayload, db: Session = Depends(get_db)):
+    """Record user thumbs up (+1) / thumbs down (-1) feedback into MySQL."""
+    validate_client_context(payload.client_id)
+    fb = Feedback(
+        message_id=payload.message_id,
+        conversation_id=payload.conversation_id,
+        client_id=payload.client_id,
+        rating=1 if payload.rating > 0 else -1
+    )
+    db.add(fb)
+    db.commit()
+    return {"status": "success", "message": "Feedback successfully recorded in MySQL."}
 
 
 @router.get("/ui/escalations", response_model=EscalationListResponse)

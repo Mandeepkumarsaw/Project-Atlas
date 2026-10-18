@@ -16,7 +16,9 @@ RUN wget --no-check-certificate -q https://github.com/bcit-ci/CodeIgniter/archiv
     && mv CodeIgniter-3.1.13/system /var/www/ci3_system \
     && rm -rf /tmp/*
 
-# Configure Apache document root
+# Configure Apache document root and AllowOverride
+RUN sed -i '/<\/VirtualHost>/i <Directory /var/www/html>\\n    AllowOverride All\\n    Require all granted\\n<\/Directory>' /etc/apache2/sites-available/000-default.conf
+
 WORKDIR /var/www/html
 
 # Copy application files
