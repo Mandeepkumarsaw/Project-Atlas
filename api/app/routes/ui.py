@@ -27,6 +27,8 @@ HTML_CONTENT = r"""<!DOCTYPE html>
     <!-- Marked & DOMPurify for Safe Markdown Rendering -->
     <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.2/dist/purify.min.js"></script>
+    <!-- Chart.js 4.4 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 
     <style>
         :root {
@@ -222,6 +224,261 @@ HTML_CONTENT = r"""<!DOCTYPE html>
             top: 0;
             z-index: 1030;
             backdrop-filter: blur(8px);
+        }
+
+        .nav-view-switcher {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            padding: 3px;
+            gap: 4px;
+        }
+
+        .nav-tab-btn {
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: none;
+            background: transparent;
+            color: #94A3B8;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-tab-btn:hover {
+            color: #F8FAFC;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-tab-btn.active {
+            color: #FFFFFF;
+            background: linear-gradient(135deg, #2563EB, #0284C7);
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+        }
+
+        .badge-pill-new {
+            background: rgba(56, 189, 248, 0.25);
+            color: #38BDF8;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            font-size: 0.62rem;
+            padding: 1px 6px;
+            border-radius: 9999px;
+            letter-spacing: 0.05em;
+        }
+
+        /* Analytics Workspace Styles */
+        .analytics-container {
+            max-width: 1550px;
+            margin: 0 auto;
+            padding: 1.5rem 1.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow-subtle);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-card);
+        }
+
+        .stat-card-glow {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            filter: blur(25px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .stat-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.1;
+            margin-bottom: 0.35rem;
+        }
+
+        .stat-subtext {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .chart-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-subtle);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .chart-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+
+        .chart-body-wrap {
+            position: relative;
+            flex-grow: 1;
+            min-height: 290px;
+        }
+
+        .playground-card {
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-lg);
+            padding: 1.75rem;
+            color: #F8FAFC;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+        }
+
+        .playground-slider-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            color: #38BDF8;
+        }
+
+        .formula-box {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            border-radius: var(--radius-md);
+            padding: 1rem 1.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+        }
+
+        .data-table-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-subtle);
+        }
+
+        .custom-table {
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+
+        .custom-table th {
+            background: #F1F5F9;
+            color: #475569;
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .custom-table td {
+            padding: 0.85rem 1rem;
+            vertical-align: middle;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .custom-table tr:hover {
+            background-color: #F8FAFC;
+        }
+
+        .entitlement-badge-unlocked {
+            background-color: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .entitlement-badge-locked {
+            background-color: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .entitlement-badge-public {
+            background-color: #EFF6FF;
+            color: #1E40AF;
+            border: 1px solid #BFDBFE;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .cagr-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+            background: #F0FDF4;
+            color: #166534;
+            border: 1px solid #BBF7D0;
+            padding: 2px 7px;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
         }
 
         .nav-actions {
@@ -1011,6 +1268,19 @@ HTML_CONTENT = r"""<!DOCTYPE html>
             </div>
         </a>
 
+        <!-- CENTER: View Navigation Switcher -->
+        <div class="nav-view-switcher">
+            <button type="button" id="tabBtnCopilot" onclick="switchView('copilot')" class="nav-tab-btn active" title="AI Research Copilot">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span>Copilot Chat</span>
+            </button>
+            <button type="button" id="tabBtnAnalytics" onclick="switchView('analytics')" class="nav-tab-btn" title="Market Research Analytical Dashboard">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Analytical Dashboard</span>
+                <span class="badge-pill-new">NEW</span>
+            </button>
+        </div>
+
         <div class="nav-actions">
             <!-- Active Client Switcher -->
             <div class="client-selector-wrap" title="Switch client authorization context">
@@ -1043,8 +1313,8 @@ HTML_CONTENT = r"""<!DOCTYPE html>
         </div>
     </header>
 
-    <!-- MAIN TWO-COLUMN WORKSPACE -->
-    <div class="workspace-wrapper">
+    <!-- MAIN TWO-COLUMN WORKSPACE: COPILOT -->
+    <div id="copilotWorkspace" class="workspace-wrapper">
         <div class="row g-4">
             
             <!-- LEFT COLUMN: AI RESEARCH CHAT (~70%) -->
@@ -1198,6 +1468,254 @@ HTML_CONTENT = r"""<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- ANALYTICAL INTELLIGENCE WORKSPACE -->
+    <div id="analyticsWorkspace" class="analytics-container" style="display: none;">
+        <!-- Page Intro Header -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <div>
+                <h3 class="fw-bold mb-1" style="font-size: 1.45rem; letter-spacing: -0.02em;">
+                    <i class="bi bi-graph-up-arrow text-primary me-2"></i>Market Research Analytics &amp; Quantitative Intelligence
+                </h3>
+                <p class="text-secondary mb-0" style="font-size: 0.85rem;">
+                    Multi-sector quantitative metrics, compound annual growth rate projections (2025–2030), and entitlement boundaries for <strong id="analyticsClientHeader">C-01 (Northwind Utilities)</strong>.
+                </p>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="button" onclick="switchView('copilot')" class="btn btn-primary btn-sm px-3 py-2 fw-semibold shadow-sm" style="border-radius: var(--radius-md);">
+                    <i class="bi bi-chat-text-fill me-1"></i>Ask Copilot Question
+                </button>
+            </div>
+        </div>
+
+        <!-- 1. KEY KPI STAT CARDS -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-glow" style="background-color: #2563EB;"></div>
+                    <div class="stat-title">Total Monitored Market</div>
+                    <div class="stat-value text-primary">$55.25B</div>
+                    <div class="stat-subtext">
+                        <i class="bi bi-clock-history text-primary"></i> 2024 Base Year Valuation
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-glow" style="background-color: #059669;"></div>
+                    <div class="stat-title">Average Sector CAGR</div>
+                    <div class="stat-value text-success">11.0%</div>
+                    <div class="stat-subtext">
+                        <i class="bi bi-arrow-up-right text-success"></i> 2025–2030 Compound Velocity
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-glow" style="background-color: #06B6D4;"></div>
+                    <div class="stat-title">2030 Projected Valuation</div>
+                    <div class="stat-value" style="color: #0284C7;">$97.10B</div>
+                    <div class="stat-subtext">
+                        <i class="bi bi-calculator text-info"></i> Deterministic Start × (1+r)^6
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-glow" style="background-color: #8B5CF6;"></div>
+                    <div class="stat-title">Licensed Report Access</div>
+                    <div class="stat-value" id="analyticsLicensedBadge" style="color: #7C3AED;">2 of 7 Reports</div>
+                    <div class="stat-subtext">
+                        <i class="bi bi-shield-check text-purple"></i> Active Context: <span id="analyticsClientContextSpan">C-01</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. MAIN CHARTS ROW 1 (Grouped Bar Market Size & CAGR Ranking) -->
+        <div class="row g-4 mb-4">
+            <!-- Plot 1: 2024 Base vs 2030 Projected Market Size -->
+            <div class="col-lg-8">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <h5 class="chart-title"><i class="bi bi-bar-chart-fill text-primary"></i>Market Valuation: 2024 Base vs. 2030 Forecast</h5>
+                            <p class="chart-subtitle">Direct comparison between 2024 base values and 2030 projected valuations (USD Billion) across research sectors</p>
+                        </div>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">USD Billion</span>
+                    </div>
+                    <div class="chart-body-wrap">
+                        <canvas id="marketSizeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plot 2: CAGR Velocity Ranking -->
+            <div class="col-lg-4">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <h5 class="chart-title"><i class="bi bi-speedometer2 text-success"></i>CAGR Growth Velocity</h5>
+                            <p class="chart-subtitle">Compound Annual Growth Rate ranking (2025–2030)</p>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">% Annual</span>
+                    </div>
+                    <div class="chart-body-wrap">
+                        <canvas id="cagrRankingChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MAIN CHARTS ROW 2 (Regional APAC Share & Multi-Year Projection Curves) -->
+        <div class="row g-4 mb-4">
+            <!-- Plot 3: Multi-Year Trajectory Line Curve (2024-2030) -->
+            <div class="col-lg-7">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <h5 class="chart-title"><i class="bi bi-graph-up text-info"></i>Multi-Year Growth Trajectory (2024–2030)</h5>
+                            <p class="chart-subtitle">Annual compounding curves derived deterministically from research baseline metrics</p>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-light text-secondary border">Interactive Curve</span>
+                        </div>
+                    </div>
+                    <div class="chart-body-wrap">
+                        <canvas id="trajectoryLineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Plot 4: APAC Regional Share Distribution -->
+            <div class="col-lg-5">
+                <div class="chart-card">
+                    <div class="chart-card-header">
+                        <div>
+                            <h5 class="chart-title"><i class="bi bi-pie-chart-fill text-warning"></i>APAC Regional Market Share</h5>
+                            <p class="chart-subtitle">Asia-Pacific regional penetration percentage by covered sector</p>
+                        </div>
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-2 py-1">% Share</span>
+                    </div>
+                    <div class="chart-body-wrap">
+                        <canvas id="apacShareChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. DETERMINISTIC CALCULATION PLAYGROUND -->
+        <div class="playground-card mb-4">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-6">
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <div class="p-2 rounded bg-primary bg-opacity-25 border border-primary text-info">
+                            <i class="bi bi-cpu fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0 text-white">Deterministic Arithmetic Engine Playground</h5>
+                            <p class="text-white-50 mb-0" style="font-size: 0.8rem;">Test live compound projection formulas matching Atlas agent's Python calculation node</p>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-1">
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small mb-1">Select Sector Report Base:</label>
+                            <select id="calcSectorSelect" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="runLiveCalculation()">
+                                <option value="4.21" data-cagr="11.2" data-name="Smart Water Metering (Full Solution)" data-report="R-101">R-101: Smart Water Meter ($4.21B)</option>
+                                <option value="3.87" data-cagr="9.8" data-name="Smart Water Metering (Hardware Only)" data-report="R-102">R-102: Metering Hardware ($3.87B)</option>
+                                <option value="12.45" data-cagr="8.4" data-name="Residential Water Purifier" data-report="R-103">R-103: Water Purifiers ($12.45B)</option>
+                                <option value="8.70" data-cagr="12.1" data-name="Building Energy Management" data-report="R-104">R-104: BEMS Energy ($8.70B)</option>
+                                <option value="15.30" data-cagr="6.9" data-name="Industrial Water Treatment" data-report="R-105">R-105: Industrial Water ($15.30B)</option>
+                                <option value="5.60" data-cagr="14.5" data-name="Smart Grid Analytics" data-report="R-106">R-106: Smart Grid ($5.60B)</option>
+                                <option value="5.12" data-cagr="14.3" data-name="Industrial IoT Manufacturing" data-report="R-107">R-107: Industrial IoT ($5.12B)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small mb-1">Compounding Years (n): <span id="sliderYearsVal" class="playground-slider-val">6</span> Years (2024➔2030)</label>
+                            <input type="range" class="form-range" id="sliderYears" min="1" max="10" value="6" oninput="runLiveCalculation()">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small mb-1">Custom CAGR Rate: <span id="sliderCagrVal" class="playground-slider-val">11.2%</span></label>
+                            <input type="range" class="form-range" id="sliderCagr" min="1.0" max="25.0" step="0.1" value="11.2" oninput="runLiveCalculation()">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-white-50 small mb-1">Regional Share Formulation:</label>
+                            <select id="calcShareSelect" class="form-select form-select-sm bg-dark text-white border-secondary" onchange="runLiveCalculation()">
+                                <option value="0.38">R-101 APAC Share (38%)</option>
+                                <option value="0.41">R-102 Hardware Share (41%)</option>
+                                <option value="0.45">R-103 Water Purifier Share (45%)</option>
+                                <option value="0.34">R-107 IIoT APAC Share (34%)</option>
+                                <option value="1.00">100% Global Total</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="formula-box">
+                        <div class="text-white-50 mb-2 small text-uppercase fw-semibold" style="letter-spacing: 0.05em;">
+                            <i class="bi bi-terminal me-1 text-info"></i>Execution Output
+                        </div>
+                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                            <span class="text-white-50">Projected Global Market:</span>
+                            <span id="calcGlobalOutput" class="fs-4 fw-bold text-success">$7.98 Billion</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-baseline mb-2">
+                            <span class="text-white-50">Projected Regional Share:</span>
+                            <span id="calcRegionalOutput" class="fs-5 fw-bold text-info">$3.03 Billion</span>
+                        </div>
+                        <hr class="border-secondary my-2">
+                        <div class="text-white-50 small" id="calcFormulaStep">
+                            <code>Global = 4.21 × (1 + 0.112)^6 = $7.98B</code>
+                        </div>
+                        <div class="text-warning small mt-2" style="font-size: 0.76rem;">
+                            <i class="bi bi-info-circle me-1"></i>Base-Year Ambiguity: Compounding from 2024 represents 6 intervals ($7.98B); compounding from 2025 represents 5 intervals ($7.16B).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. STRUCTURED METRICS DATA TABLE WITH ENTITLEMENT ACCESS -->
+        <div class="data-table-card mb-4">
+            <div class="p-3 border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <div>
+                    <h5 class="fw-bold mb-0" style="font-size: 1rem;"><i class="bi bi-table text-primary me-2"></i>Structured Market Metrics Corpus</h5>
+                    <p class="text-secondary small mb-0">Verified quantitative parameters indexed into MySQL and entitlement-filtered for active client context</p>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <input type="text" id="tableSearch" class="form-control form-control-sm" placeholder="Filter metrics or sectors..." onkeyup="filterMetricsTable()" style="max-width: 240px;">
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table custom-table" id="metricsTable">
+                    <thead>
+                        <tr>
+                            <th>Report ID</th>
+                            <th>Market Metric &amp; Scope</th>
+                            <th>Sector</th>
+                            <th>2024 Base</th>
+                            <th>CAGR (2025-30)</th>
+                            <th>2030 Projected</th>
+                            <th>APAC Share</th>
+                            <th>License Status</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="metricsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT: LOGIC & SAFE MARKDOWN PRESENTATION -->
     <script>
         let currentClientId = "C-01";
@@ -1304,6 +1822,7 @@ HTML_CONTENT = r"""<!DOCTYPE html>
             currentClientId = document.getElementById("clientSelect").value;
             clearChat();
             updateClientView();
+            updateAnalyticsView();
         }
 
         function clearChat() {
@@ -1599,8 +2118,328 @@ HTML_CONTENT = r"""<!DOCTYPE html>
             } catch (e) {}
         }
 
+        // Market Analytics Intelligence Data Model
+        const MARKET_METRICS = [
+            { report_id: 'R-101', title: 'Global Smart Water Meter Market 2025', scope: 'Full Solution: Hardware, Software & Managed Services', sector: 'Utilities & Infrastructure', base_2024: 4.21, cagr: 11.2, projected_2030: 7.98, apac_share: 38.0, access_type: 'paid' },
+            { report_id: 'R-102', title: 'Smart Water Metering: Industry Outlook 2024', scope: 'Hardware Only: AMR/AMI Physical Devices Exclusively', sector: 'Utilities & Infrastructure', base_2024: 3.87, cagr: 9.8, projected_2030: 6.18, apac_share: 41.0, access_type: 'public_excerpt' },
+            { report_id: 'R-103', title: 'Residential Water Purifier Market 2025', scope: 'Point-of-Use & Point-of-Entry Appliances', sector: 'Consumer Durables', base_2024: 12.45, cagr: 8.4, projected_2030: 20.15, apac_share: 45.0, access_type: 'paid' },
+            { report_id: 'R-104', title: 'Commercial Building Energy Management 2025', scope: 'Commercial Building Energy Software & Controls', sector: 'Building Technologies', base_2024: 8.70, cagr: 12.1, projected_2030: 17.29, apac_share: 20.0, access_type: 'paid' },
+            { report_id: 'R-105', title: 'Industrial Water Treatment Equipment 2025', scope: 'Industrial Filtration, Membranes & ZLD Equipment', sector: 'Industrial Equipment', base_2024: 15.30, cagr: 6.9, projected_2030: 22.84, apac_share: 42.0, access_type: 'paid' },
+            { report_id: 'R-106', title: 'Smart Grid Analytics Market 2025', scope: 'ADMS, DERMS & Predictive Asset Analytics', sector: 'Utilities & Infrastructure', base_2024: 5.60, cagr: 14.5, projected_2030: 12.72, apac_share: 24.0, access_type: 'paid' },
+            { report_id: 'R-107', title: 'Industrial IoT in Manufacturing 2025', scope: 'Edge Analytics & Asset Monitoring', sector: 'Manufacturing', base_2024: 5.12, cagr: 14.3, projected_2030: 11.47, apac_share: 34.0, access_type: 'paid' }
+        ];
+
+        const CLIENT_ENTITLEMENTS = {
+            'C-01': ['R-101', 'R-103', 'R-102'],
+            'C-02': ['R-103', 'R-102'],
+            'C-03': ['R-102']
+        };
+
+        const CLIENT_NAMES = {
+            'C-01': 'Northwind Utilities (Enterprise)',
+            'C-02': 'Blue Delta Infra (Standard)',
+            'C-03': 'Apex Energy Partners (Trial)'
+        };
+
+        let chartInstances = {};
+        let currentActiveView = 'copilot';
+
+        function switchView(viewName) {
+            currentActiveView = viewName;
+            const copilotEl = document.getElementById('copilotWorkspace');
+            const analyticsEl = document.getElementById('analyticsWorkspace');
+            const btnCopilot = document.getElementById('tabBtnCopilot');
+            const btnAnalytics = document.getElementById('tabBtnAnalytics');
+
+            if (viewName === 'analytics') {
+                copilotEl.style.display = 'none';
+                analyticsEl.style.display = 'block';
+                btnCopilot.classList.remove('active');
+                btnAnalytics.classList.add('active');
+                updateAnalyticsView();
+                setTimeout(initOrUpdateCharts, 50);
+            } else {
+                analyticsEl.style.display = 'none';
+                copilotEl.style.display = 'block';
+                btnAnalytics.classList.remove('active');
+                btnCopilot.classList.add('active');
+            }
+        }
+
+        function updateAnalyticsView() {
+            const header = document.getElementById('analyticsClientHeader');
+            if (header) {
+                header.innerText = currentClientId + ' (' + (CLIENT_NAMES[currentClientId] || currentClientId) + ')';
+            }
+            const contextSpan = document.getElementById('analyticsClientContextSpan');
+            if (contextSpan) {
+                contextSpan.innerText = currentClientId;
+            }
+
+            const allowed = CLIENT_ENTITLEMENTS[currentClientId] || ['R-102'];
+            const licensedCount = allowed.filter(id => id !== 'R-102').length;
+            const badge = document.getElementById('analyticsLicensedBadge');
+            if (badge) {
+                badge.innerText = `${licensedCount} of 7 Reports`;
+            }
+
+            renderMetricsTable();
+            runLiveCalculation();
+        }
+
+        function renderMetricsTable() {
+            const tbody = document.getElementById('metricsTableBody');
+            if (!tbody) return;
+
+            const allowed = CLIENT_ENTITLEMENTS[currentClientId] || ['R-102'];
+
+            tbody.innerHTML = MARKET_METRICS.map(row => {
+                const isPaidLicensed = allowed.includes(row.report_id) && row.access_type !== 'public_excerpt';
+                const isPublic = row.access_type === 'public_excerpt';
+
+                let badgeHtml = '';
+                if (isPaidLicensed) {
+                    badgeHtml = `<span class="entitlement-badge-unlocked"><i class="bi bi-unlock-fill"></i> Licensed (Full)</span>`;
+                } else if (isPublic) {
+                    badgeHtml = `<span class="entitlement-badge-public"><i class="bi bi-file-earmark-text"></i> Public Excerpt</span>`;
+                } else {
+                    badgeHtml = `<span class="entitlement-badge-locked" title="Report not licensed for Client ${currentClientId}"><i class="bi bi-lock-fill"></i> Upgrade Needed</span>`;
+                }
+
+                return `
+                    <tr class="metric-row">
+                        <td class="fw-bold">
+                            <span class="badge bg-dark text-white px-2 py-1" style="font-family: 'JetBrains Mono', monospace;">${escapeHtml(row.report_id)}</span>
+                        </td>
+                        <td>
+                            <div class="fw-semibold text-dark">${escapeHtml(row.title)}</div>
+                            <div class="text-muted small" style="font-size: 0.75rem;">${escapeHtml(row.scope)}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-secondary border">${escapeHtml(row.sector)}</span>
+                        </td>
+                        <td class="fw-bold text-primary">$${row.base_2024.toFixed(2)}B</td>
+                        <td><span class="cagr-badge">+${row.cagr.toFixed(1)}%</span></td>
+                        <td class="fw-bold text-success">$${row.projected_2030.toFixed(2)}B</td>
+                        <td><span class="fw-semibold text-warning">${row.apac_share.toFixed(1)}%</span></td>
+                        <td>${badgeHtml}</td>
+                        <td class="text-end">
+                            <button type="button" class="btn btn-outline-primary btn-sm px-2 py-1" style="font-size: 0.75rem;" onclick="askFromAnalytics('What is the market sizing and 2030 growth projection in ${escapeHtml(row.report_id)}?')">
+                                <i class="bi bi-chat-quote-fill me-1"></i>Query
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function askFromAnalytics(question) {
+            switchView('copilot');
+            const input = document.getElementById('questionInput');
+            if (input) {
+                input.value = question;
+                handleChatSubmit(new Event('submit'));
+            }
+        }
+
+        function runLiveCalculation() {
+            const selectEl = document.getElementById('calcSectorSelect');
+            if (!selectEl) return;
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            const baseVal = parseFloat(selectedOpt.value) || 4.21;
+            const defaultCagr = parseFloat(selectedOpt.dataset.cagr) || 11.2;
+
+            const sliderCagr = parseFloat(document.getElementById('sliderCagr').value);
+            const sliderYears = parseInt(document.getElementById('sliderYears').value);
+            const shareRate = parseFloat(document.getElementById('calcShareSelect').value);
+
+            document.getElementById('sliderCagrVal').innerText = sliderCagr.toFixed(1) + '%';
+            document.getElementById('sliderYearsVal').innerText = sliderYears;
+
+            const r = sliderCagr / 100;
+            const globalCompounded = baseVal * Math.pow(1 + r, sliderYears);
+            const regionalVal = globalCompounded * shareRate;
+
+            document.getElementById('calcGlobalOutput').innerText = '$' + globalCompounded.toFixed(2) + ' Billion';
+            document.getElementById('calcRegionalOutput').innerText = '$' + regionalVal.toFixed(2) + ' Billion';
+
+            document.getElementById('calcFormulaStep').innerHTML = 
+                `<code>Valuation = ${baseVal.toFixed(2)} × (1 + ${(r).toFixed(3)})^${sliderYears} = $${globalCompounded.toFixed(2)}B</code>` +
+                (shareRate < 1.0 ? ` &nbsp;|&nbsp; <code>Regional (${(shareRate * 100).toFixed(0)}%) = $${regionalVal.toFixed(2)}B</code>` : '');
+        }
+
+        function filterMetricsTable() {
+            const query = document.getElementById('tableSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('.metric-row');
+            rows.forEach(row => {
+                const text = row.innerText.toLowerCase();
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        }
+
+        function initOrUpdateCharts() {
+            if (typeof Chart === 'undefined') return;
+
+            // Plot 1: 2024 Base vs 2030 Compounded Forecast
+            const ctxMarket = document.getElementById('marketSizeChart');
+            if (ctxMarket) {
+                if (chartInstances['marketSize']) chartInstances['marketSize'].destroy();
+                chartInstances['marketSize'] = new Chart(ctxMarket.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: MARKET_METRICS.map(d => d.report_id + ' (' + d.title.split(' ')[0] + ' ' + (d.title.split(' ')[1] || '') + ')'),
+                        datasets: [
+                            {
+                                label: '2024 Base Valuation ($B)',
+                                data: MARKET_METRICS.map(d => d.base_2024),
+                                backgroundColor: 'rgba(37, 99, 235, 0.85)',
+                                borderColor: '#2563EB',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            },
+                            {
+                                label: '2030 Compounded Forecast ($B)',
+                                data: MARKET_METRICS.map(d => d.projected_2030),
+                                backgroundColor: 'rgba(6, 182, 212, 0.85)',
+                                borderColor: '#06B6D4',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: { label: ctx => ` ${ctx.dataset.label}: USD ${ctx.parsed.y.toFixed(2)} Billion` }
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'USD Billion ($)' }, grid: { color: 'rgba(226, 232, 240, 0.6)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Plot 2: CAGR Velocity Ranking
+            const ctxCagr = document.getElementById('cagrRankingChart');
+            if (ctxCagr) {
+                const sortedByCagr = [...MARKET_METRICS].sort((a, b) => b.cagr - a.cagr);
+                if (chartInstances['cagrRanking']) chartInstances['cagrRanking'].destroy();
+                chartInstances['cagrRanking'] = new Chart(ctxCagr.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: sortedByCagr.map(d => d.report_id),
+                        datasets: [{
+                            label: 'CAGR % (2025-2030)',
+                            data: sortedByCagr.map(d => d.cagr),
+                            backgroundColor: sortedByCagr.map(d => d.cagr >= 12 ? 'rgba(5, 150, 105, 0.85)' : (d.cagr >= 9 ? 'rgba(6, 182, 212, 0.85)' : 'rgba(37, 99, 235, 0.85)')),
+                            borderColor: sortedByCagr.map(d => d.cagr >= 12 ? '#059669' : (d.cagr >= 9 ? '#06B6D4' : '#2563EB')),
+                            borderWidth: 1,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: ctx => ` CAGR: ${ctx.parsed.x.toFixed(1)}% per annum` } }
+                        },
+                        scales: {
+                            x: { beginAtZero: true, title: { display: true, text: 'Annual Growth Rate (%)' }, grid: { color: 'rgba(226, 232, 240, 0.6)' } },
+                            y: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Plot 3: Multi-Year Growth Trajectory Curves
+            const ctxLine = document.getElementById('trajectoryLineChart');
+            if (ctxLine) {
+                const years = [2024, 2025, 2026, 2027, 2028, 2029, 2030];
+                const trajectoryColors = ['#2563EB', '#059669', '#06B6D4', '#8B5CF6', '#F59E0B', '#DC2626', '#64748B'];
+                const trajectoryDatasets = MARKET_METRICS.map((d, idx) => {
+                    const values = years.map(yr => {
+                        const n = yr - 2024;
+                        const r = d.cagr / 100;
+                        return parseFloat((d.base_2024 * Math.pow(1 + r, n)).toFixed(2));
+                    });
+                    return {
+                        label: d.report_id + ': ' + d.title.split(' ')[0] + ' ' + (d.title.split(' ')[1] || ''),
+                        data: values,
+                        borderColor: trajectoryColors[idx % trajectoryColors.length],
+                        backgroundColor: trajectoryColors[idx % trajectoryColors.length],
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: false
+                    };
+                });
+
+                if (chartInstances['trajectory']) chartInstances['trajectory'].destroy();
+                chartInstances['trajectory'] = new Chart(ctxLine.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: years, datasets: trajectoryDatasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                            tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: USD ${ctx.parsed.y.toFixed(2)}B` } }
+                        },
+                        scales: {
+                            y: { title: { display: true, text: 'Valuation ($B USD)' }, grid: { color: 'rgba(226, 232, 240, 0.6)' } },
+                            x: { grid: { color: 'rgba(226, 232, 240, 0.4)' } }
+                        }
+                    }
+                });
+            }
+
+            // Plot 4: APAC Regional Share
+            const ctxApac = document.getElementById('apacShareChart');
+            if (ctxApac) {
+                if (chartInstances['apacShare']) chartInstances['apacShare'].destroy();
+                chartInstances['apacShare'] = new Chart(ctxApac.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: MARKET_METRICS.map(d => d.report_id + ' (' + d.apac_share + '%)'),
+                        datasets: [{
+                            data: MARKET_METRICS.map(d => d.apac_share),
+                            backgroundColor: [
+                                'rgba(37, 99, 235, 0.85)',
+                                'rgba(6, 182, 212, 0.85)',
+                                'rgba(5, 150, 105, 0.85)',
+                                'rgba(245, 158, 11, 0.85)',
+                                'rgba(139, 92, 246, 0.85)',
+                                'rgba(220, 38, 38, 0.85)',
+                                'rgba(100, 116, 139, 0.85)'
+                            ],
+                            borderWidth: 2,
+                            borderColor: '#FFFFFF'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+                            tooltip: { callbacks: { label: ctx => ` ${ctx.label}: APAC holds ${ctx.parsed}% share` } }
+                        },
+                        cutout: '62%'
+                    }
+                });
+            }
+        }
+
         // Initialize view on page load
         updateClientView();
+        updateAnalyticsView();
     </script>
 </body>
 </html>
@@ -1617,6 +2456,24 @@ class FeedbackPayload(BaseModel):
 @router.get("/", response_class=HTMLResponse)
 def get_chat_ui():
     return HTMLResponse(content=HTML_CONTENT)
+
+
+@router.get("/analytics", response_class=HTMLResponse)
+def get_analytics_ui():
+    content = HTML_CONTENT.replace(
+        'id="copilotWorkspace" class="workspace-wrapper"',
+        'id="copilotWorkspace" class="workspace-wrapper" style="display: none;"'
+    ).replace(
+        'id="analyticsWorkspace" class="analytics-container" style="display: none;"',
+        'id="analyticsWorkspace" class="analytics-container" style="display: block;"'
+    ).replace(
+        'id="tabBtnCopilot" onclick="switchView(\'copilot\')" class="nav-tab-btn active"',
+        'id="tabBtnCopilot" onclick="switchView(\'copilot\')" class="nav-tab-btn"'
+    ).replace(
+        'id="tabBtnAnalytics" onclick="switchView(\'analytics\')" class="nav-tab-btn"',
+        'id="tabBtnAnalytics" onclick="switchView(\'analytics\')" class="nav-tab-btn active"'
+    )
+    return HTMLResponse(content=content)
 
 
 @router.post("/ui/chat", response_model=ChatResponse)
