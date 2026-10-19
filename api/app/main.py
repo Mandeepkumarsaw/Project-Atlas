@@ -1,3 +1,11 @@
+import os
+import sys
+
+# Ensure api directory is in python path so 'app' package resolves cleanly from any working directory
+_api_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _api_dir not in sys.path:
+    sys.path.insert(0, _api_dir)
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
