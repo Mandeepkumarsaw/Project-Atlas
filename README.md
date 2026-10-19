@@ -6,17 +6,17 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Workflow-orange.svg)](https://www.langchain.com/langgraph)
 [![PHP: 8.2](https://img.shields.io/badge/PHP-CodeIgniter_3-red.svg)](https://codeigniter.com/)
 [![Docker: Compose](https://img.shields.io/badge/Docker-Compose_Ready-2496ED.svg)](https://www.docker.com/)
-[![Live Hosted Demo](https://img.shields.io/badge/Live_Demo-Hosted_Portal-success.svg)](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)
+[![Live Hosted Demo](https://img.shields.io/badge/Live_Demo-Hosted_Portal-success.svg)](https://project-atlas-t80t.onrender.com/)
 
 **Organization:** Cognitive Market Research and Consulting  
 **Repository:** [github.com/Mandeepkumarsaw/Project-Atlas](https://github.com/Mandeepkumarsaw/Project-Atlas)  
-**Live Hosted Portal:** [https://nashville-combat-beaver-broadway.trycloudflare.com/chat](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)  
+**Live Hosted Portal:** [https://project-atlas-t80t.onrender.com/](https://project-atlas-t80t.onrender.com/)  
 **Role:** AI Software Developer Take-Home Assignment  
 
 > [!TIP]
 > **🚀 Live Reviewer Deployment:**  
 > Reviewers can test and evaluate the system immediately in their browser without local installation:  
-> 🔗 **[Open Project Atlas Live Portal](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)**  
+> 🔗 **[Open Project Atlas Live Portal](https://project-atlas-t80t.onrender.com/)**  
 > *(Pre-loaded with reports R-101 to R-107, multi-client context switching C-01/C-02/C-03, and live feedback persistence).*
 
 ---
@@ -141,8 +141,8 @@ flowchart TD
 
 ### Option 0: Live Hosted Cloud Evaluation (Fastest — No Installation Needed)
 Access the live deployment directly in your browser:
-- **Copilot Chat Portal:** **[https://nashville-combat-beaver-broadway.trycloudflare.com/chat](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)**
-- **Analytical Dashboard:** **[https://nashville-combat-beaver-broadway.trycloudflare.com/chat/analytics](https://nashville-combat-beaver-broadway.trycloudflare.com/chat/analytics)**
+- **Copilot Chat Portal:** **[https://project-atlas-t80t.onrender.com/](https://project-atlas-t80t.onrender.com/)**
+- **Analytical Dashboard:** **[https://project-atlas-t80t.onrender.com/analytics](https://project-atlas-t80t.onrender.com/analytics)**
 - Automatically connected to the LangGraph AI multi-agent workflow, Qdrant vector store, and MySQL database.
 
 ---
