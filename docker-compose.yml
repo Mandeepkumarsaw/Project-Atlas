@@ -109,6 +109,8 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:-atlas_app_secret}
     ports:
       - "8080:80"
+    volumes:
+      - ./php-portal/application:/var/www/html/application
     depends_on:
       api:
         condition: service_healthy

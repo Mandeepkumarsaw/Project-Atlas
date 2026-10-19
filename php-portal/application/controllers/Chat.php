@@ -67,21 +67,55 @@ class Chat extends CI_Controller {
                 'C-01' => 'Northwind Utilities (Enterprise - R-101, R-103)',
                 'C-02' => 'Blue Delta Infra (Standard - R-103 Only)',
                 'C-03' => 'Apex Energy Partners (Trial - Public Only)'
-            ]
+            ],
+            'active_tab' => 'chat'
         ];
 
         $this->load->view('chat_view', $data);
     }
 
+    public function analytics() {
+        $requested_client = $this->input->get('client_id', TRUE);
+        if ($requested_client && in_array($requested_client, $this->allowed_clients, true)) {
+            $client_id = $requested_client;
+        } else {
+            $client_id = $this->session->userdata('client_id');
+            if (!$client_id || !in_array($client_id, $this->allowed_clients, true)) {
+                $client_id = 'C-01';
+            }
+        }
+        $this->session->set_userdata('client_id', $client_id);
+
+        $metrics = $this->chat_model->get_market_metrics_with_entitlements($client_id);
+        $summary = $this->chat_model->get_analytics_summary($client_id);
+        $escalations = $this->api_client->get_escalations($client_id);
+
+        $data = [
+            'client_id' => $client_id,
+            'metrics' => $metrics,
+            'summary' => $summary,
+            'escalations' => $escalations,
+            'clients' => [
+                'C-01' => 'Northwind Utilities (Enterprise - R-101, R-103)',
+                'C-02' => 'Blue Delta Infra (Standard - R-103 Only)',
+                'C-03' => 'Apex Energy Partners (Trial - Public Only)'
+            ],
+            'active_tab' => 'analytics'
+        ];
+
+        $this->load->view('analytics_view', $data);
+    }
+
     public function switch_client() {
         $client_id = $this->input->post('client_id', TRUE);
+        $redirect_to = $this->input->post('redirect_to', TRUE) ?: '/chat';
         if ($client_id && in_array($client_id, $this->allowed_clients, true)) {
             $this->session->set_userdata('client_id', $client_id);
             // Clear current conversation on client switch to guarantee isolation
             $this->session->set_userdata('conversation_id', 'conv-' . substr(md5(uniqid(rand(), true)), 0, 8));
             $this->session->set_userdata('chat_history', []);
         }
-        redirect('/chat');
+        redirect($redirect_to);
     }
 
     public function send() {

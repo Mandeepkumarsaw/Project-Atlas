@@ -229,6 +229,49 @@
             color: #F8FAFC;
         }
 
+        .nav-view-switcher {
+            display: inline-flex;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-md);
+            padding: 3px;
+            gap: 4px;
+        }
+
+        .nav-tab-btn {
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: var(--radius-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: #94A3B8;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-tab-btn:hover {
+            color: #F8FAFC;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-tab-btn.active {
+            color: #FFFFFF;
+            background: linear-gradient(135deg, #2563EB, #0284C7);
+            box-shadow: 0 2px 6px rgba(37, 99, 235, 0.4);
+        }
+
+        .badge-pill-new {
+            background: rgba(56, 189, 248, 0.25);
+            color: #38BDF8;
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            font-size: 0.62rem;
+            padding: 1px 6px;
+            border-radius: 9999px;
+            letter-spacing: 0.05em;
+        }
+
         .nav-btn {
             font-size: 0.8rem;
             font-weight: 500;
@@ -736,6 +779,19 @@
                 <div class="accent-line"></div>
             </div>
         </a>
+
+        <!-- CENTER: View Navigation Switcher -->
+        <div class="nav-view-switcher">
+            <a href="<?php echo site_url('chat'); ?>" class="nav-tab-btn active" title="AI Research Copilot">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span>Copilot Chat</span>
+            </a>
+            <a href="<?php echo site_url('chat/analytics'); ?>" class="nav-tab-btn" title="Market Research Analytical Dashboard">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Analytical Dashboard</span>
+                <span class="badge-pill-new">NEW</span>
+            </a>
+        </div>
 
         <div class="nav-actions">
             <!-- Active Client Switcher -->

@@ -6,17 +6,17 @@
 [![LangGraph](https://img.shields.io/badge/LangGraph-Agent_Workflow-orange.svg)](https://www.langchain.com/langgraph)
 [![PHP: 8.2](https://img.shields.io/badge/PHP-CodeIgniter_3-red.svg)](https://codeigniter.com/)
 [![Docker: Compose](https://img.shields.io/badge/Docker-Compose_Ready-2496ED.svg)](https://www.docker.com/)
-[![Live Hosted Demo](https://img.shields.io/badge/Live_Demo-Hosted_Portal-success.svg)](https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat)
+[![Live Hosted Demo](https://img.shields.io/badge/Live_Demo-Hosted_Portal-success.svg)](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)
 
 **Organization:** Cognitive Market Research and Consulting  
 **Repository:** [github.com/Mandeepkumarsaw/Project-Atlas](https://github.com/Mandeepkumarsaw/Project-Atlas)  
-**Live Hosted Portal:** [https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat](https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat)  
+**Live Hosted Portal:** [https://nashville-combat-beaver-broadway.trycloudflare.com/chat](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)  
 **Role:** AI Software Developer Take-Home Assignment  
 
 > [!TIP]
 > **🚀 Live Reviewer Deployment:**  
 > Reviewers can test and evaluate the system immediately in their browser without local installation:  
-> 🔗 **[Open Project Atlas Live Portal](https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat)**  
+> 🔗 **[Open Project Atlas Live Portal](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)**  
 > *(Pre-loaded with reports R-101 to R-107, multi-client context switching C-01/C-02/C-03, and live feedback persistence).*
 
 ---
@@ -139,7 +139,7 @@ flowchart TD
 
 ### Option 0: Live Hosted Cloud Evaluation (Fastest — No Installation Needed)
 Access the live deployment directly in your browser:
-- **Hosted Portal URL:** **[https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat](https://deadline-potatoes-acquisitions-bill.trycloudflare.com/chat)**
+- **Hosted Portal URL:** **[https://nashville-combat-beaver-broadway.trycloudflare.com/chat](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)**
 - Automatically connected to the LangGraph AI multi-agent workflow, Qdrant vector store, and MySQL database.
 
 ---

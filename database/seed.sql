@@ -44,4 +44,6 @@ INSERT IGNORE INTO market_metrics (report_id, metric_name, metric_value, unit, b
 ('R-105', 'Global Industrial Water Treatment Market Size 2024', 15.30, 'USD Billion', 2024, 2030, 6.90, 'Global', 'Industrial Filtration, Membranes & ZLD Equipment'),
 ('R-105', 'APAC Industrial Water Share 2024', 42.00, 'Percent', 2024, 2024, NULL, 'Asia-Pacific', 'Regional market share'),
 ('R-106', 'Global Smart Grid Analytics Market Size 2024', 5.60, 'USD Billion', 2024, 2030, 14.50, 'Global', 'ADMS, DERMS & Predictive Asset Analytics'),
-('R-106', 'APAC Smart Grid Share 2024', 24.00, 'Percent', 2024, 2024, NULL, 'Asia-Pacific', 'Regional market share');
+('R-106', 'APAC Smart Grid Share 2024', 24.00, 'Percent', 2024, 2024, NULL, 'Asia-Pacific', 'Regional market share'),
+('R-107', 'Global IIoT Market Size 2024', 5.12, 'USD Billion', 2024, 2030, 14.30, 'Global', 'Edge Analytics & Asset Monitoring'),
+('R-107', 'APAC IIoT Market Share 2024', 34.00, 'Percent', 2024, 2024, NULL, 'Asia-Pacific', 'Regional market share');
