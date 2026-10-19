@@ -31,6 +31,7 @@
 - **Source Conflict Detection:** Accurately compares disparate market figures (e.g., `R-101` USD 4.21B full-solution vs `R-102` USD 3.87B hardware-only), explicitly prohibiting improper metric averaging.
 - **Deterministic Calculation Engine:** Pure Python arithmetic for compound growth and regional share projections with explicit disclosure of base-year ambiguities.
 - **Low-Confidence & Out-of-Window Escalation:** Automatically generates persistent MySQL analyst escalation tickets when queries require extrapolation beyond the 2030 forecast window or when confidence drops below `0.70`.
+- **Interactive Analytical Intelligence Dashboard:** Features real-time Chart.js market sizing comparisons (2024 Base vs. 2030 Projections), CAGR growth velocity rankings, APAC regional market share distribution, deterministic multi-year growth trajectory curves, and an interactive mathematical calculation playground alongside client-entitled metric tables.
 - **Legacy PHP CodeIgniter 3 Integration:** Connects modern LangGraph AI reasoning to a CSRF-protected, HTML-escaped enterprise PHP portal.
 
 ---
@@ -103,6 +104,7 @@ flowchart TD
 | **Embeddings** | `sentence-transformers/all-MiniLM-L6-v2` | 384-dimensional dense semantic vectors with offline fallback |
 | **Relational Database**| MySQL 8.0 / SQLAlchemy | Clients, entitlements, metrics, conversations, feedback, tickets |
 | **Legacy Frontend** | PHP 8.2 / CodeIgniter 3 | Enterprise chat interface, CSRF protection, session isolation |
+| **Data Visualizations** | Chart.js 4.4 | Interactive grouped bar, horizontal ranking, doughnut, and trajectory line plots |
 | **Testing** | Pytest + Custom Benchmark Suite | 25-question automated evaluation harness checking assertions |
 | **Containerization** | Docker + Docker Compose | 1-click reproducible deployment under 10 minutes |
 
@@ -139,7 +141,8 @@ flowchart TD
 
 ### Option 0: Live Hosted Cloud Evaluation (Fastest — No Installation Needed)
 Access the live deployment directly in your browser:
-- **Hosted Portal URL:** **[https://nashville-combat-beaver-broadway.trycloudflare.com/chat](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)**
+- **Copilot Chat Portal:** **[https://nashville-combat-beaver-broadway.trycloudflare.com/chat](https://nashville-combat-beaver-broadway.trycloudflare.com/chat)**
+- **Analytical Dashboard:** **[https://nashville-combat-beaver-broadway.trycloudflare.com/chat/analytics](https://nashville-combat-beaver-broadway.trycloudflare.com/chat/analytics)**
 - Automatically connected to the LangGraph AI multi-agent workflow, Qdrant vector store, and MySQL database.
 
 ---
@@ -252,7 +255,37 @@ $$\text{APAC}_{2030} = 7.98 \times 0.38 = \text{USD 3.03 Billion}$$
 
 ---
 
-## 9. Evaluation & Test Suite
+## 9. Interactive Analytical Dashboard & Visualizations
+
+In addition to conversational AI research, Project Atlas includes an executive **Analytical Dashboard** accessible directly through the top navigation bar (`/chat/analytics`):
+
+### 1. Real-Time Executive KPI Strip
+- **Total Monitored Market ($55.25B):** Aggregate base-year market valuation dynamically calculated from indexed research reports.
+- **Average Sector CAGR (11.0%):** Weighted compound annual growth velocity across covered industrial sectors.
+- **2030 Compounded Forecast ($97.10B):** Multi-sector valuation projected through 2030 using deterministic compounding algorithms.
+- **Dynamic Entitlement Gauge:** Real-time visibility into the authenticated client's licensed library scope (e.g., Client `C-01` holds full access to `R-101` and `R-103`; Client `C-02` holds `R-103` only; Client `C-03` holds public excerpt access).
+
+### 2. Interactive Chart.js Visualizations
+- **Market Valuation (2024 Base vs. 2030 Compounded Forecast):** Grouped dual-bar plot directly comparing baseline market sizes against 2030 projected valuations for Water Treatment, Residential Purifiers, Commercial BEMS, Smart Grid Analytics, IIoT Manufacturing, and Smart Water Metering.
+- **CAGR Growth Velocity Ranking:** Color-coded horizontal bar chart highlighting high-velocity growth sectors ($\ge 12\%$ green, $8\text{--}12\%$ cyan, $< 8\%$ blue).
+- **Multi-Year Growth Trajectory Curves (2024–2030):** Interactive multi-line trend plot showing annual deterministic compounding progressions from 2024 through 2030 with hover telemetry.
+- **APAC Regional Market Share (%):** Donut chart visualizing regional market penetration across sectors (ranging from 20% to 45%).
+
+### 3. Deterministic Arithmetic Engine Playground
+- An interactive in-browser simulation replicating the Atlas Python calculation node:
+  - Select baseline sector report ($V_0$).
+  - Slide custom compounding intervals ($n = 1\text{ to }10$ years) and CAGR rates ($r = 1\%\text{ to }25\%$).
+  - Toggle regional shares ($38\%$ APAC for `R-101`, $45\%$ for `R-103`, etc.).
+  - Live mathematical computation output with explicit **Base-Year Ambiguity Disclosure** (2024 base 6-interval vs 2025 base 5-interval formulation).
+
+### 4. Structured Metrics Corpus Table & Client Entitlement Isolation
+- Comprehensive data grid with live search and sector filtering.
+- Visual tenant license badges: **Licensed (Full)**, **Public Excerpt**, or **Upgrade Needed** (dynamically filtered by the active client dropdown context).
+- Direct **"Query"** action button on each row that routes instantly into the Copilot chat with pre-populated analytical prompts.
+
+---
+
+## 10. Evaluation & Test Suite
 
 The automated evaluation harness executes 25 multi-category benchmark questions with deep schema assertions and active database mutation verification:
 
@@ -274,7 +307,7 @@ Authoritative machine-readable evaluation telemetry is saved to [evaluation/eval
 
 ---
 
-## 10. API Reference
+## 11. API Reference
 
 All protected endpoints require the `X-API-Key` header:
 
@@ -285,7 +318,7 @@ All protected endpoints require the `X-API-Key` header:
 
 ---
 
-## 11. Repository Documentation
+## 12. Repository Documentation
 
 - [docs/failure-analysis.md](docs/failure-analysis.md) — Comprehensive technical post-mortem of six genuine failure cases encountered and remediated during engineering.
 - [docs/architecture.md](docs/architecture.md) — Architectural diagrams, state machine graph, and trust boundaries.
@@ -297,7 +330,7 @@ All protected endpoints require the `X-API-Key` header:
 
 ---
 
-## 12. Known Limitations & Environmental Prerequisites
+## 13. Known Limitations & Environmental Prerequisites
 
 1. **Docker Daemon Access:** In Windows host environments, executing live multi-container orchestration via `docker compose up` requires an elevated Docker Desktop service (`com.docker.service`). The repository provides automated AST and YAML configuration tests (`test_portal_and_ops_phase4.py`) that validate compose port bindings, health checks, bridge networks, and MySQL configurations statically without requiring elevation.
 2. **Local Standalone Execution:** In environments where native Docker or MySQL 8.0 services are offline, Project Atlas automatically and safely activates its fail-closed local test engines (SQLite with `PRAGMA query_only = ON` for read-only SQL, in-memory vector storage for Qdrant, and `standalone_bootstrap.php` for CodeIgniter 3).
